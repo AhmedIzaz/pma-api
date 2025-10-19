@@ -1,0 +1,75 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Transform, Type } from 'class-transformer';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  isString,
+  IsString,
+  Length,
+} from 'class-validator';
+
+class UserBaseDTO {
+  @IsNumber()
+  @IsNotEmpty()
+  @ApiProperty()
+  @Expose()
+  userId: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  @Expose()
+  userName: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  @ApiProperty()
+  @Expose()
+  userEmail: string;
+}
+
+export class UserRegistrationDTO {
+  @IsString()
+  @Length(4, 50)
+  @IsNotEmpty()
+  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true })
+  userName: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  @ApiProperty({ type: 'string', required: true })
+  userEmail: string;
+
+  @IsString()
+  @Length(4, 50)
+  @IsNotEmpty()
+  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true })
+  userPassword: string;
+}
+
+export class UserRegistrationResponseDTO extends UserBaseDTO {}
+
+export class UserLoginDTO {
+  @IsEmail()
+  @IsNotEmpty()
+  @ApiProperty({ type: 'string', required: true })
+  userEmail: string;
+
+  @IsString()
+  @Length(4, 50)
+  @IsNotEmpty()
+  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true })
+  userPassword?: string;
+}
+
+export class UserLoginResponseDTO {
+
+  @Expose()
+  @Type(()=> UserBaseDTO)
+  user:UserBaseDTO
+
+  @Expose()
+  @IsString()
+  accessToken: string;
+}
