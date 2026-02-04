@@ -6,10 +6,28 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './userModule/user.module';
 // import { dataSourceOption } from 'database/data-source';
 import { PromptModule } from './prompt/prompt.module';
+import { SymptomModule } from './symptom/symptom.module';
+import { JwtModule } from '@nestjs/jwt';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './common/guards/auth.guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    JwtModule.registerAsync({
+      global: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<TEnvironmentVariables>) => {
+        const JWTSecret = config.get('JWT_SECRET');
+        console.log('JWT Secret is :', JWTSecret);
+        return {
+          global: true,
+          secret: JWTSecret,
+          signOptions: { expiresIn: 100 },
+        };
+      },
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -28,13 +46,19 @@ import { PromptModule } from './prompt/prompt.module';
         synchronize: false,
       }),
     }),
+    
 
     // feature modules
     UserModule,
 
     PromptModule,
+
+    SymptomModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    
+  ],
 })
 export class AppModule {}

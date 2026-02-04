@@ -14,6 +14,10 @@ export class UserRepository {
     return this.repository(manager)?.findOne({ where: { userEmail: email } });
   }
 
+  async findById(userId: number) {
+    return await this.repository().findOneBy({userId})
+  }
+
   async create(data: Partial<UserEntity>, manager?: EntityManager) {
     const repo = this.repository(manager);
     const instance = repo.create(data);
