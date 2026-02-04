@@ -6,6 +6,6 @@ const setupSwagger = (intance: INestApplication) => {
     .setTitle('Personal Medical Assistant API')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(intance, config);
-  SwaggerModule.setup('api', intance, documentFactory);
+  SwaggerModule.setup('api/docs', intance, documentFactory);
 };
 export default setupSwagger;

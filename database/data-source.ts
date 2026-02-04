@@ -1,29 +1,25 @@
 import 'dotenv/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
 
-const configService: ConfigService = new ConfigService<TEnvironmentVariables>();
+// const process.env: process.env = new process.env<TEnvironmentVariables>();
 
 console.log('Database connection ==================', {
-  host: configService.get('DB_HOST'),
-  port: configService.get('DB_PORT'),
-  username: configService.get('DB_USER'),
-  password: configService.get('DB_PASS'),
-  database: configService.get('DB_NAME'),
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  username: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
 });
 
-export const dataSourceOption: DataSourceOptions = {
+export default new DataSource({
   type: 'mysql',
-  host: configService.get('DB_HOST'),
-  port: configService.get('DB_PORT'),
-  username: configService.get('DB_USER'),
-  password: configService.get('DB_PASS'),
-  database: configService.get('DB_NAME'),
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  username: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
 
-  //
-  entities: ['dist/**/*.entity.js'],
-  migrations: ['dist/database/migrations/*.js'],
-};
-
-const dataSource = new DataSource(dataSourceOption);
-export default dataSource;
+  entities: ['src/**/*.entity.ts'],
+  migrations: ['database/migrations/*.ts'],
+  synchronize: false,
+});
