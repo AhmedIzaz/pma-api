@@ -26,5 +26,14 @@ export class CreatePromptDTO {
 @Exclude()
 export class CreatePromptResponseDTO {
   @Expose()
-  success: boolean;
+  generatedBy?: 'USER' | 'SYSTEM';
+
+  @Expose()
+  triageLevel?: 'HIGH' | 'MEDIUM' | 'LOW';
+
+  @Expose()
+  firstAidCode?: string;
+
+  @Expose()
+  hospitalLookupNeeded?: boolean;
 }

@@ -10,6 +10,7 @@ import { SymptomModule } from './symptom/symptom.module';
 import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
+import { FirstAidModule } from './first-aid/first-aid.module';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { AuthGuard } from './common/guards/auth.guard';
         return {
           global: true,
           secret: JWTSecret,
-          signOptions: { expiresIn: 100 },
+          signOptions: { expiresIn: 24 * 60 * 1 * 60 },
         };
       },
     }),
@@ -42,7 +43,7 @@ import { AuthGuard } from './common/guards/auth.guard';
         migrations: ['dist/database/migrations/*.js'],
         retryAttempts: 10,
         retryDelay: 10 * 1000, // 10 seconds,
-        logging: ['error', 'query'],
+        logging: ['error'],
         synchronize: false,
       }),
     }),
@@ -54,6 +55,8 @@ import { AuthGuard } from './common/guards/auth.guard';
     PromptModule,
 
     SymptomModule,
+
+    FirstAidModule,
   ],
   controllers: [AppController],
   providers: [
