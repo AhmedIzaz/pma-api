@@ -7,4 +7,5 @@ type TEnvironmentVariables = {
   DB_PASS: string;
   DB_NAME: string;
   JWT_SECRET: string;
+  GOOGLE_CLIENT_ID: string;
 };

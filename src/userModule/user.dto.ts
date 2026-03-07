@@ -1,10 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
   IsNumber,
-  isString,
   IsString,
   Length,
 } from 'class-validator';
@@ -23,10 +22,9 @@ class UserBaseDTO {
   userName: string;
 
   @IsEmail()
-  @IsNotEmpty()
   @ApiProperty()
   @Expose()
-  userEmail: string;
+  userEmail?: string;
 }
 
 export class UserRegistrationDTO {
@@ -48,7 +46,7 @@ export class UserRegistrationDTO {
   userPassword: string;
 }
 
-export class UserRegistrationResponseDTO extends UserBaseDTO {}
+export class UserRegistrationResponseDTO extends UserBaseDTO { }
 
 export class UserLoginDTO {
   @IsEmail()
@@ -66,10 +64,17 @@ export class UserLoginDTO {
 export class UserLoginResponseDTO {
 
   @Expose()
-  @Type(()=> UserBaseDTO)
-  user:UserBaseDTO
+  @Type(() => UserBaseDTO)
+  user: UserBaseDTO
 
   @Expose()
   @IsString()
   accessToken: string;
+}
+
+export class GoogleOAuthDTO {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ type: 'string', required: true, description: 'Google ID token from mobile SDK' })
+  idToken: string;
 }

@@ -20,10 +20,11 @@ import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import type { Request as ExpressRequest } from 'express';
 import { TUserInterface } from 'src/userModule/interfaces/user.interface';
 import { GetPromptQueryDTO, GetPromptsResponseDTO } from './dto/getPrompt.dto';
+import { Throttle, } from '@nestjs/throttler';
 
 @Controller('prompt')
 export class PromptController {
-    constructor(private readonly promptService: PromptService) {}
+    constructor(private readonly promptService: PromptService) { }
 
     @UseInterceptors(ClassSerializerInterceptor)
     @SerializeOptions({
@@ -39,13 +40,16 @@ export class PromptController {
     ) {
         const { user } = (req as any) ?? {};
 
-        const {data, nextCursor} = await this.promptService.getPromptsByUserId(
+        const { data, nextCursor } = await this.promptService.getPromptsByUserId(
             (user as TUserInterface)?.userId,
             query,
         );
         return { data, nextCursor };
     }
 
+
+
+    @Throttle({ default: { limit: 30, ttl: 60 } })
     @UseInterceptors(ClassSerializerInterceptor)
     @SerializeOptions({
         type: CreatePromptResponseDTO,

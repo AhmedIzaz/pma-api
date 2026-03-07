@@ -11,6 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
 import { FirstAidModule } from './first-aid/first-aid.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -47,7 +48,17 @@ import { FirstAidModule } from './first-aid/first-aid.module';
         synchronize: false,
       }),
     }),
-    
+
+    ThrottlerModule.forRootAsync({
+      useFactory: () => ({
+        throttlers: [{
+          name: "BASIC",
+          ttl: 60,
+          limit: 30
+        }]
+      })
+    }),
+
 
     // feature modules
     UserModule,
@@ -61,7 +72,11 @@ import { FirstAidModule } from './first-aid/first-aid.module';
   controllers: [AppController],
   providers: [
     AppService,
-    
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
+
   ],
 })
-export class AppModule {}
+export class AppModule { }

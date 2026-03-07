@@ -8,6 +8,7 @@ import { PromptRepository } from './repositories/prompt.repository';
 import { UserModule } from 'src/userModule/user.module';
 import { FirstAidEntity } from 'src/first-aid/entities/first-aid.entity';
 import { FirstAidModule } from 'src/first-aid/first-aid.module';
+import { SymptomAiService } from './symptom-ai.service';
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import { FirstAidModule } from 'src/first-aid/first-aid.module';
     FirstAidModule
   ],
   controllers: [PromptController],
-  providers: [PromptService, PromptRepository],
+  providers: [PromptService, PromptRepository, SymptomAiService],
 })
-export class PromptModule {}
+export class PromptModule { }

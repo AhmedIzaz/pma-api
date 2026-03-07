@@ -11,8 +11,8 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 100, nullable: false })
   userName: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true, nullable: false })
-  userEmail: string;
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
+  userEmail?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true }) // nullable true because there will be some oauth authenticated user
   userPassword?: string;
@@ -20,9 +20,12 @@ export class UserEntity {
   @Column({ type: 'enum', enum: TRegistrationTypeEnum, nullable: true })
   userRegistrationType?: TRegistrationTypeEnum;
 
+  @Column({ type: "varchar", nullable: true, unique: true })
+  socialAuthId?: string
+
   @Column(() => CommonDateEntity, { prefix: false })
   dateInfo: CommonDateEntity;
 
-  @OneToMany(()=> PromptEntity, (prompt) => prompt.user)
+  @OneToMany(() => PromptEntity, (prompt) => prompt.user)
   prompts: PromptEntity[]
 }

@@ -5,6 +5,8 @@ import { CreatePromptDTO } from './dto/createPrompt.dto';
 import { UserRepository } from 'src/userModule/user.repository';
 import { FirstAidService } from 'src/first-aid/first-aid.service';
 import { GetPromptQueryDTO } from './dto/getPrompt.dto';
+import { SymptomAiService } from './symptom-ai.service';
+import { SymptomTriageLevelEnum } from 'src/common/enums/triage.enum';
 
 @Injectable()
 export class PromptService {
@@ -13,7 +15,8 @@ export class PromptService {
     private readonly promptRepository: PromptRepository,
     private readonly userRepository: UserRepository,
     private readonly firstAidService: FirstAidService,
-  ) {}
+    private readonly symptomAiService: SymptomAiService,
+  ) { }
 
   async getPromptsByUserId(userId: number, query: GetPromptQueryDTO) {
     try {
@@ -21,9 +24,9 @@ export class PromptService {
       const userExist = await this.userRepository.findById(userId);
       if (!userExist?.userId) throw new NotFoundException('User not found');
 
-      const {data, nextCursor} = await this.promptRepository.getPromptsByUserId(userId, query);
+      const { data, nextCursor } = await this.promptRepository.getPromptsByUserId(userId, query);
 
-      return {data, nextCursor};
+      return { data, nextCursor };
     } catch (error) {
       throw error;
     }
@@ -48,15 +51,18 @@ export class PromptService {
         queryRunner,
       );
 
+      const symptomAiResult = await this.symptomAiService.analyzeText(data?.text);
+      console.log({ symptomAiResult });
+
       const code = 'CUT_BLEEDING';
       const firstAidInstance = await this.firstAidService.findOneByCode(code);
 
       const replyPrompt = await this.promptRepository.create(
         {
           userId,
-          triageLevel: 'HIGH',
+          triageLevel: SymptomTriageLevelEnum[symptomAiResult?.triage_level],
           firstAid: firstAidInstance ?? undefined,
-          hospitalLookupNeeded: true,
+          hospitalLookupNeeded: symptomAiResult?.hospital_lookup_needed,
           generatedBy: 'SYSTEM',
         },
         queryRunner,
