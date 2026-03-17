@@ -51,13 +51,13 @@ export class UserRegistrationResponseDTO extends UserBaseDTO { }
 export class UserLoginDTO {
   @IsEmail()
   @IsNotEmpty()
-  @ApiProperty({ type: 'string', required: true })
+  @ApiProperty({ type: 'string', required: true, example: 'ahmedizazbhuiyan@gmail.com' })
   userEmail: string;
 
   @IsString()
   @Length(4, 50)
   @IsNotEmpty()
-  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true })
+  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true, example: "ahmedizazbhuiyan@gmail.com" })
   userPassword?: string;
 }
 

@@ -23,6 +23,9 @@ export class PromptEntity {
   @ManyToOne(() => FirstAidEntity, (fAid) => fAid.prompts)
   firstAid?: FirstAidEntity;
 
+  @Column({ type: 'text', nullable: true })
+  firstAidString?: string;
+
   @Column({ type: 'boolean', nullable: true })
   hospitalLookupNeeded?: boolean;
 

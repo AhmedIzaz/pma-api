@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     BadGatewayException,
     Injectable,
@@ -26,9 +27,15 @@ export class SymptomAiService {
     private readonly logger = new Logger(SymptomAiService.name);
     private readonly baseUrl: string;
 
+    private genAI: GoogleGenerativeAI;
+
     constructor(private readonly configService: ConfigService) {
         // Falls back to localhost if SYMPTOM_AI_URL is not set
         this.baseUrl = this.configService.get<string>('SYMPTOM_AI_URL') ?? 'http://localhost:8080';
+        const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+        if (apiKey) {
+            this.genAI = new GoogleGenerativeAI(apiKey);
+        }
     }
 
     /**
@@ -74,5 +81,59 @@ export class SymptomAiService {
         }
 
         return response.json() as Promise<SymptomAiResult>;
+    }
+
+
+    async getAiResponse(userPrompt: string): Promise<string> {
+        const prompt = `
+        You are a medical triage AI.
+
+        Your job:
+        - Analyze the user's text.
+        - Detect if it is a medical emergency or symptom.
+        - Respond ONLY in valid JSON (no explanation, no extra text).
+
+        Rules:
+
+        1. If input is a clear medical symptom/emergency:
+        Return:
+        {
+        "triageLevel": "HIGH" | "MEDIUM" | "LOW",
+        "firstAid": "string (max 255 chars) or null",
+        "hospitalLookupNeeded": true | false
+        }
+
+        2. If input is NOT medical:
+        Return:
+        {
+        "message": "Please ask a medical-related question."
+        }
+
+        3. If input is unclear or insufficient:
+        Return:
+        {
+        "message": "Please provide more clear medical symptoms."
+        }
+
+        Triage rules:
+        - HIGH → life-threatening (can't breathe, chest pain, dying, unconscious etc type high level symptoms)
+        - MEDIUM → moderate symptoms (fever, vomiting, pain etc type medium level symptoms)
+        - LOW → mild symptoms (headache, cold etc type low level symptoms)
+
+        Important:
+        - Output MUST be valid JSON
+        - NO markdown
+        - NO explanation
+        - NO extra text
+
+        User input:
+        "${userPrompt}"
+        `;
+        // Access the model (e.g., gemini-1.5-flash for speed or gemini-1.5-pro for complex tasks)
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
     }
 }

@@ -26,7 +26,7 @@ export class GetPromptsResponseDTO {
     data: GetPromptsResponseDataDTO[];
 
     @Expose()
-    nextCursor?:string
+    nextCursor?: string
 }
 
 @Exclude()
@@ -43,9 +43,12 @@ class GetPromptsResponseDataDTO {
     @Expose()
     triageLevel?: 'HIGH' | 'MEDIUM' | 'LOW';
 
+    // @Expose()
+    // @Type(() => FirstAidDTO)
+    // firstAid?: FirstAidDTO;
+
     @Expose()
-    @Type(() => FirstAidDTO)
-    firstAid?: FirstAidDTO;
+    firstAidString?: string;
 
     @Expose()
     hospitalLookupNeeded?: boolean;

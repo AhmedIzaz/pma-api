@@ -6,5 +6,6 @@ export interface TCreatePromptInterface {
   generatedBy?: 'USER' | 'SYSTEM';
   triageLevel?: 'HIGH' | 'MEDIUM' | 'LOW';
   firstAid?: TFirstAid;
+  firstAidString?: string;
   hospitalLookupNeeded?: boolean;
 }

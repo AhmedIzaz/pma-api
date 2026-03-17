@@ -16,7 +16,7 @@ export class PromptRepository {
     constructor(
         @InjectRepository(PromptEntity)
         private readonly promptRepository: Repository<PromptEntity>,
-    ) {}
+    ) { }
 
     getRepo(queryRunner?: QueryRunner) {
         const repo = queryRunner
@@ -67,6 +67,7 @@ export class PromptRepository {
             generatedBy,
             triageLevel,
             firstAid,
+            firstAidString,
             hospitalLookupNeeded,
         } = data ?? {};
         const promptInstance = repo.create({
@@ -75,6 +76,7 @@ export class PromptRepository {
             generatedBy,
             triageLevel,
             firstAid,
+            firstAidString,
             hospitalLookupNeeded,
         });
         return await repo.save(promptInstance);

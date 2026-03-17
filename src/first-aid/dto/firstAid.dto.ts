@@ -1,4 +1,15 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
+
+
+@Exclude()
+class FirstAidDescriptionDTO {
+  @Expose()
+  title: string;
+
+  @Expose()
+  steps: string[];
+}
+
 
 @Exclude()
 export class FirstAidDTO {
@@ -6,5 +17,8 @@ export class FirstAidDTO {
   code: string;
 
   @Expose()
-  description: any;
+  @Type(() => FirstAidDescriptionDTO)
+  description: FirstAidDescriptionDTO;
 }
+
+

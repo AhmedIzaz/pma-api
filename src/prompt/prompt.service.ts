@@ -54,7 +54,7 @@ export class PromptService {
       const symptomAiResult = await this.symptomAiService.analyzeText(data?.text);
       console.log({ symptomAiResult });
 
-      const code = 'CUT_BLEEDING';
+      const code = symptomAiResult?.first_aid_code;
       const firstAidInstance = await this.firstAidService.findOneByCode(code);
 
       const replyPrompt = await this.promptRepository.create(
@@ -73,6 +73,57 @@ export class PromptService {
       console.log({ r1, replyPrompt });
 
       return replyPrompt;
+    } catch (error) {
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+
+  async createBackup(userId: number, data: CreatePromptDTO) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const userExist = await this.userRepository.findById(userId);
+      if (!userExist?.userId) {
+        throw new NotFoundException('User not found');
+      }
+
+      const r1 = await this.promptRepository.create(
+        {
+          userId,
+          text: data?.text,
+          generatedBy: data?.generatedBy ?? 'USER',
+        },
+        queryRunner,
+      );
+
+      const symptomAiResult = await this.symptomAiService.getAiResponse(data?.text);
+
+      const parsedResult = JSON.parse(symptomAiResult);
+
+      if (!parsedResult?.message) {
+        const r2 = await this.promptRepository.create(
+          {
+            userId,
+            triageLevel: parsedResult?.triageLevel,
+            firstAidString: parsedResult?.firstAid,
+            hospitalLookupNeeded: parsedResult?.hospitalLookupNeeded,
+            generatedBy: 'SYSTEM',
+          },
+          queryRunner,
+        );
+      }
+
+
+
+      await queryRunner.commitTransaction();
+
+
+
+      return parsedResult;
     } catch (error) {
       throw error;
     } finally {

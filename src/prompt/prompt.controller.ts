@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { PromptService } from './prompt.service';
 import {
+    CreatePromptBackupResponseDTO,
     CreatePromptDTO,
     CreatePromptResponseDTO,
 } from './dto/createPrompt.dto';
@@ -68,6 +69,30 @@ export class PromptController {
             body,
         );
         console.log({ response });
+        return response;
+    }
+
+
+
+    @Throttle({ default: { limit: 30, ttl: 60 } })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @SerializeOptions({
+        type: CreatePromptBackupResponseDTO,
+        excludeExtraneousValues: true,
+    })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    @Post('create-backup')
+    async createPromptControllerBackup(
+        @Body() body: CreatePromptDTO,
+        @Request() req: ExpressRequest,
+    ) {
+        const { user } = (req as any) ?? {};
+        const response = await this.promptService.createBackup(
+            (user as TUserInterface)?.userId,
+            body,
+        );
+
         return response;
     }
 }
