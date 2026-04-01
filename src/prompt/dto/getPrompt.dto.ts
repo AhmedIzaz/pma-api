@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
-import { FirstAidDTO } from 'src/first-aid/dto/firstAid.dto';
+// import { FirstAidDTO } from 'src/first-aid/dto/firstAid.dto';
 
 export class GetPromptQueryDTO {
 
