@@ -59,6 +59,67 @@ export class PromptRepository {
         };
     }
 
+    async getHealthProgress(
+        userId: number,
+        period: string,
+        from?: string,
+        to?: string,
+    ) {
+        let dateGroupExpr: string;
+
+        switch (period) {
+            case 'monthly':
+                dateGroupExpr = "DATE_FORMAT(pe.createdAt, '%Y-%m-01')";
+                break;
+            case 'weekly':
+                dateGroupExpr =
+                    'DATE(DATE_SUB(pe.createdAt, INTERVAL WEEKDAY(pe.createdAt) DAY))';
+                break;
+            default:
+                dateGroupExpr = 'DATE(pe.createdAt)';
+                break;
+        }
+
+        const params: any[] = [userId];
+        let dateFilter = '';
+
+        if (from) {
+            dateFilter += ' AND pe.createdAt >= ?';
+            params.push(from);
+        }
+        if (to) {
+            dateFilter += ' AND pe.createdAt <= ?';
+            params.push(to);
+        }
+
+        const sql = `
+      SELECT
+        ${dateGroupExpr} AS date,
+        COUNT(*) AS totalPrompts,
+        SUM(CASE WHEN pe.triageLevel = 'HIGH' THEN 1 ELSE 0 END) AS highCount,
+        SUM(CASE WHEN pe.triageLevel = 'MEDIUM' THEN 1 ELSE 0 END) AS mediumCount,
+        SUM(CASE WHEN pe.triageLevel = 'LOW' THEN 1 ELSE 0 END) AS lowCount,
+        SUM(CASE WHEN pe.hospitalLookupNeeded = 1 THEN 1 ELSE 0 END) AS hospitalLookupCount,
+        AVG(
+          CASE
+            WHEN pe.triageLevel = 'HIGH' THEN 3
+            WHEN pe.triageLevel = 'MEDIUM' THEN 2
+            WHEN pe.triageLevel = 'LOW' THEN 1
+            ELSE NULL
+          END
+        ) AS severityScore
+      FROM prompt_entity pe
+      WHERE pe.userUserId = ?
+        AND pe.generatedBy = 'SYSTEM'
+        AND pe.triageLevel IS NOT NULL
+        ${dateFilter}
+      GROUP BY ${dateGroupExpr}
+      ORDER BY date ASC
+    `;
+
+        return this.promptRepository.manager.query(sql, params);
+    }
+
     async create(data: TCreatePromptInterface, queryRunner?: QueryRunner) {
         const repo = this.getRepo(queryRunner);
         const {

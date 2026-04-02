@@ -17,10 +17,14 @@ import {
     CreatePromptResponseDTO,
 } from './dto/createPrompt.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
-import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import type { Request as ExpressRequest } from 'express';
 import { TUserInterface } from 'src/userModule/interfaces/user.interface';
 import { GetPromptQueryDTO, GetPromptsResponseDTO } from './dto/getPrompt.dto';
+import {
+    HealthProgressQueryDTO,
+    HealthProgressResponseDTO,
+} from './dto/healthProgress.dto';
 import { Throttle, } from '@nestjs/throttler';
 
 @Controller('prompt')
@@ -48,7 +52,27 @@ export class PromptController {
         return { data, nextCursor };
     }
 
-
+    @UseInterceptors(ClassSerializerInterceptor)
+    @SerializeOptions({
+        type: HealthProgressResponseDTO,
+        excludeExtraneousValues: true,
+    })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    @ApiOperation({
+        summary: 'Health progress summary for graph visualization',
+    })
+    @Get('health-progress')
+    async getHealthProgress(
+        @Request() req: ExpressRequest,
+        @Query() query: HealthProgressQueryDTO,
+    ) {
+        const { user } = (req as any) ?? {};
+        return this.promptService.getHealthProgress(
+            (user as TUserInterface)?.userId,
+            query,
+        );
+    }
 
     @Throttle({ default: { limit: 30, ttl: 60 } })
     @UseInterceptors(ClassSerializerInterceptor)

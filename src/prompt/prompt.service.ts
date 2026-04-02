@@ -5,6 +5,7 @@ import { CreatePromptDTO } from './dto/createPrompt.dto';
 import { UserRepository } from 'src/userModule/user.repository';
 import { FirstAidService } from 'src/first-aid/first-aid.service';
 import { GetPromptQueryDTO } from './dto/getPrompt.dto';
+import { HealthProgressQueryDTO } from './dto/healthProgress.dto';
 import { SymptomAiService } from './symptom-ai.service';
 import { SymptomTriageLevelEnum } from 'src/common/enums/triage.enum';
 
@@ -30,6 +31,98 @@ export class PromptService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getHealthProgress(userId: number, query: HealthProgressQueryDTO) {
+    const userExist = await this.userRepository.findById(userId);
+    if (!userExist?.userId) throw new NotFoundException('User not found');
+
+    const { period = 'weekly', from, to } = query;
+    const rawData: any[] = await this.promptRepository.getHealthProgress(
+      userId,
+      period,
+      from,
+      to,
+    );
+
+    const SEVERITY_MAP = { HIGH: 3, MEDIUM: 2, LOW: 1 } as const;
+
+    const timeline = rawData.map((row, index) => {
+      const currentScore = parseFloat(row.severityScore) || 0;
+      const prevScore =
+        index > 0 ? parseFloat(rawData[index - 1].severityScore) || 0 : null;
+
+      let delta: { direction: string; change: number } | null = null;
+      if (prevScore !== null) {
+        const change = +(currentScore - prevScore).toFixed(2);
+        delta = {
+          direction:
+            change < 0 ? 'IMPROVING' : change > 0 ? 'WORSENING' : 'STABLE',
+          change: Math.abs(change),
+        };
+      }
+
+      return {
+        date: row.date,
+        severityScore: +currentScore.toFixed(2),
+        triageCounts: {
+          HIGH: parseInt(row.highCount) || 0,
+          MEDIUM: parseInt(row.mediumCount) || 0,
+          LOW: parseInt(row.lowCount) || 0,
+        },
+        totalPrompts: parseInt(row.totalPrompts) || 0,
+        hospitalLookupCount: parseInt(row.hospitalLookupCount) || 0,
+        delta,
+      };
+    });
+
+    const totalInteractions = timeline.reduce(
+      (sum, t) => sum + t.totalPrompts,
+      0,
+    );
+
+    const frequencyMap = {
+      HIGH: timeline.reduce((sum, t) => sum + t.triageCounts.HIGH, 0),
+      MEDIUM: timeline.reduce((sum, t) => sum + t.triageCounts.MEDIUM, 0),
+      LOW: timeline.reduce((sum, t) => sum + t.triageCounts.LOW, 0),
+    };
+
+    const weightedAvg =
+      totalInteractions > 0
+        ? (frequencyMap.HIGH * SEVERITY_MAP.HIGH +
+            frequencyMap.MEDIUM * SEVERITY_MAP.MEDIUM +
+            frequencyMap.LOW * SEVERITY_MAP.LOW) /
+          totalInteractions
+        : 0;
+
+    let averageSeverity: 'HIGH' | 'MEDIUM' | 'LOW';
+    if (weightedAvg >= 2.5) averageSeverity = 'HIGH';
+    else if (weightedAvg >= 1.5) averageSeverity = 'MEDIUM';
+    else averageSeverity = 'LOW';
+
+    let overallDelta: 'IMPROVING' | 'WORSENING' | 'STABLE' = 'STABLE';
+    if (timeline.length >= 2) {
+      const first = timeline[0].severityScore;
+      const last = timeline[timeline.length - 1].severityScore;
+      if (last < first) overallDelta = 'IMPROVING';
+      else if (last > first) overallDelta = 'WORSENING';
+    }
+
+    return {
+      summary: {
+        totalInteractions,
+        averageSeverity,
+        overallDelta,
+        periodStart:
+          timeline.length > 0 ? timeline[0].date : (from ?? null),
+        periodEnd:
+          timeline.length > 0
+            ? timeline[timeline.length - 1].date
+            : (to ?? null),
+      },
+      timeline,
+      frequencyMap,
+    };
   }
 
   async create(userId: number, data: CreatePromptDTO) {
