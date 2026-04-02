@@ -115,6 +115,14 @@ export class PromptService {
           },
           queryRunner,
         );
+
+        const code = parsedResult?.code;
+        if (code) {
+          const existing = await this.firstAidService.findOneByCode(code);
+          if (!existing) {
+            await this.firstAidService.create(code, parsedResult?.firstAid, queryRunner);
+          }
+        }
       }
 
 

@@ -100,7 +100,8 @@ export class SymptomAiService {
         {
         "triageLevel": "HIGH" | "MEDIUM" | "LOW",
         "firstAid": "string (max 255 chars) or null",
-        "hospitalLookupNeeded": true | false
+        "hospitalLookupNeeded": true | false,
+        "code": "string (max 255 chars, example: HEART_ATTACK, ASTHMA, etc) or null"
         }
 
         2. If input is NOT medical:
