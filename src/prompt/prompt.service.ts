@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PromptRepository } from './repositories/prompt.repository';
 import { DataSource } from 'typeorm';
 import { CreatePromptDTO } from './dto/createPrompt.dto';
@@ -8,6 +8,7 @@ import { GetPromptQueryDTO } from './dto/getPrompt.dto';
 import { HealthProgressQueryDTO } from './dto/healthProgress.dto';
 import { SymptomAiService } from './symptom-ai.service';
 import { SymptomTriageLevelEnum } from 'src/common/enums/triage.enum';
+import Redis from 'ioredis';
 
 @Injectable()
 export class PromptService {
@@ -17,6 +18,7 @@ export class PromptService {
     private readonly userRepository: UserRepository,
     private readonly firstAidService: FirstAidService,
     private readonly symptomAiService: SymptomAiService,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis
   ) { }
 
   async getPromptsByUserId(userId: number, query: GetPromptQueryDTO) {
@@ -32,6 +34,8 @@ export class PromptService {
       throw error;
     }
   }
+
+
 
   async getHealthProgress(userId: number, query: HealthProgressQueryDTO) {
     const userExist = await this.userRepository.findById(userId);
@@ -90,9 +94,9 @@ export class PromptService {
     const weightedAvg =
       totalInteractions > 0
         ? (frequencyMap.HIGH * SEVERITY_MAP.HIGH +
-            frequencyMap.MEDIUM * SEVERITY_MAP.MEDIUM +
-            frequencyMap.LOW * SEVERITY_MAP.LOW) /
-          totalInteractions
+          frequencyMap.MEDIUM * SEVERITY_MAP.MEDIUM +
+          frequencyMap.LOW * SEVERITY_MAP.LOW) /
+        totalInteractions
         : 0;
 
     let averageSeverity: 'HIGH' | 'MEDIUM' | 'LOW';
@@ -184,14 +188,25 @@ export class PromptService {
         throw new NotFoundException('User not found');
       }
 
+      const generatedBy = data?.generatedBy ?? 'USER'
+
+      const cachedPromptResultKey = `CACHED_PROMPT:${userId}:${generatedBy}:${data?.text?.trim()?.split(' ').join('_')}`
+
+      const cachedPromptResult = await this.redis.get(cachedPromptResultKey);
+      if (cachedPromptResult) {
+        return JSON.parse(cachedPromptResult);
+      }
+
       const r1 = await this.promptRepository.create(
         {
           userId,
           text: data?.text,
-          generatedBy: data?.generatedBy ?? 'USER',
+          generatedBy,
         },
         queryRunner,
       );
+
+
 
       const symptomAiResult = await this.symptomAiService.getAiResponse(data?.text);
 
@@ -211,14 +226,16 @@ export class PromptService {
 
         const code = parsedResult?.code;
         if (code) {
-          const existing = await this.firstAidService.findOneByCode(code);
+          let existing = await this.firstAidService.findOneByCode(code);
           if (!existing) {
-            await this.firstAidService.create(code, parsedResult?.firstAid, queryRunner);
+            existing = await this.firstAidService.create(code, parsedResult?.firstAid, queryRunner);
           }
+
         }
       }
 
 
+      await this.redis.set(cachedPromptResultKey, JSON.stringify(parsedResult), "EX", 60 * 60 * 24);
 
       await queryRunner.commitTransaction();
 

@@ -12,6 +12,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
 import { FirstAidModule } from './first-aid/first-aid.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -68,6 +69,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     SymptomModule,
 
     FirstAidModule,
+
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [

@@ -49,9 +49,9 @@ export class CreatePromptBackupResponseDTO {
   @Expose()
   triageLevel?: 'HIGH' | 'MEDIUM' | 'LOW';
 
-  // @Expose()
-  // @Type(() => FirstAidDTO)
-  // firstAid?: FirstAidDTO;
+  @Expose()
+  @Type(() => FirstAidDTO)
+  firstAid?: FirstAidDTO;
 
   @Expose()
   hospitalLookupNeeded?: boolean;
