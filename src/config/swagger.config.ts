@@ -7,6 +7,6 @@ const setupSwagger = (intance: INestApplication) => {
     .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(intance, config);
-  SwaggerModule.setup('api/docs', intance, documentFactory);
+  SwaggerModule.setup('api/docsAcheEiRoute', intance, documentFactory);
 };
 export default setupSwagger;

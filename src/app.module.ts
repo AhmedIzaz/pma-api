@@ -34,20 +34,29 @@ import { RedisModule } from './redis/redis.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService<TEnvironmentVariables>) => ({
-        type: 'mysql',
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        username: configService.get('DB_USER'),
-        password: configService.get('DB_PASS'),
-        database: configService.get('DB_NAME'),
-        entities: ['dist/**/*.entity.js'],
-        migrations: ['dist/database/migrations/*.js'],
-        retryAttempts: 10,
-        retryDelay: 10 * 1000, // 10 seconds,
-        logging: ['error'],
-        synchronize: false,
-      }),
+      useFactory: (configService: ConfigService<TEnvironmentVariables>) => {
+        console.log(JSON.stringify({
+          host: configService.get('DB_HOST'),
+          port: configService.get('DB_PORT'),
+          username: configService.get('DB_USER'),
+          password: configService.get('DB_PASS'),
+          database: configService.get('DB_NAME'),
+        }, null, 2))
+        return ({
+          type: 'mysql',
+          host: configService.get('DB_HOST'),
+          port: configService.get('DB_PORT'),
+          username: configService.get('DB_USER'),
+          password: configService.get('DB_PASS'),
+          database: configService.get('DB_NAME'),
+          entities: ['dist/**/*.entity.js'],
+          migrations: ['dist/database/migrations/*.js'],
+          retryAttempts: 10,
+          retryDelay: 10 * 1000, // 10 seconds,
+          logging: ['error'],
+          synchronize: false,
+        })
+      }
     }),
 
     ThrottlerModule.forRootAsync({

@@ -9,7 +9,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { PromptEntity } from '../entities/prompt.entity';
+// import { PromptEntity } from '../entities/prompt.entity';
 import { FirstAidDTO } from 'src/first-aid/dto/firstAid.dto';
 
 export class CreatePromptDTO {

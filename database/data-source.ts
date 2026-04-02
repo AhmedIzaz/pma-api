@@ -19,7 +19,7 @@ export default new DataSource({
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
 
-  entities: ['src/**/*.entity.ts'],
-  migrations: ['database/migrations/*.ts'],
+  entities: ['dist/src/**/*.entity.js'],
+  migrations: ['dist/database/migrations/*.js'],
   synchronize: false,
 });

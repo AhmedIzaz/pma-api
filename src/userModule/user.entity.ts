@@ -1,7 +1,9 @@
-import { CommonDateEntity } from "../../src/common/entities/date.entity";
-import { TRegistrationTypeEnum } from '../../src/common/enums/database.enum';
+// import { CommonDateEntity } from "../../src/common/entities/date.entity";
+// import { TRegistrationTypeEnum } from '../../src/common/enums/database.enum';
+import { TRegistrationTypeEnum } from 'src/common/enums/database.enum';
 import { PromptEntity } from '../prompt/entities/prompt.entity';
 import { Column, Entity, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { CommonDateEntity } from 'src/common/entities/date.entity';
 
 @Entity('users')
 export class UserEntity {

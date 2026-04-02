@@ -1,7 +1,10 @@
-import { FirstAidEntity } from '../../../src/first-aid/entities/first-aid.entity';
-import { CommonDateEntity } from '../../../src/common/entities/date.entity';
-import { UserEntity } from '../../../src/userModule/user.entity';
+// import { FirstAidEntity } from '../../../src/first-aid/entities/first-aid.entity';
+// import { CommonDateEntity } from '../../../src/common/entities/date.entity';
+import { FirstAidEntity } from 'src/first-aid/entities/first-aid.entity';
+// import { UserEntity } from '../../../src/userModule/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { CommonDateEntity } from 'src/common/entities/date.entity';
+import { UserEntity } from 'src/userModule/user.entity';
 
 @Entity()
 export class PromptEntity {

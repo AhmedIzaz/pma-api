@@ -1,6 +1,9 @@
-import dataSource from 'database/data-source';
-import { FirstAidEntity } from '../../src/first-aid/entities/first-aid.entity';
-import { FIRST_AID_DATA } from 'database/data/firstAid.data';
+import { FirstAidEntity } from 'src/first-aid/entities/first-aid.entity';
+import dataSource from '../data-source';
+// import { FirstAidEntity } from '../../src/first-aid/entities/first-aid.entity';
+import { FIRST_AID_DATA } from '../data/firstAid.data';
+// import { FirstAidEntity } from '../../src/first-aid/entities/first-aid.entity';
+// import { FIRST_AID_DATA } from 'database/data/firstAid.data';
 
 export const seedFirstAids = async () => {
   try {

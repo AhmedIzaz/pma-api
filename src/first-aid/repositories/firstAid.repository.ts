@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FirstAidEntity } from '../entities/first-aid.entity';
+// import { FirstAidEntity } from '../entities/first-aid.entity';
 import { QueryRunner, Repository } from 'typeorm';
+import { FirstAidEntity } from '../entities/first-aid.entity';
 
 @Injectable()
 export class FirstAidRepository {
   constructor(
     @InjectRepository(FirstAidEntity)
     private readonly firstAidRepository: Repository<FirstAidEntity>,
-  ) {}
+  ) { }
 
   getRepo(queryRunner?: QueryRunner) {
     return queryRunner

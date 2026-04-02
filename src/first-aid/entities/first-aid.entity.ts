@@ -1,5 +1,7 @@
-import { PromptEntity } from '../../../src/prompt/entities/prompt.entity';
-import { CommonDateEntity } from '../../../src/common/entities/date.entity';
+import { CommonDateEntity } from 'src/common/entities/date.entity';
+import { PromptEntity } from 'src/prompt/entities/prompt.entity';
+// import { PromptEntity } from '../../../src/prompt/entities/prompt.entity';
+// import { CommonDateEntity } from '../../../src/common/entities/date.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
