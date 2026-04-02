@@ -86,49 +86,11 @@ export class SymptomAiService {
 
     async getAiResponse(userPrompt: string): Promise<string> {
         const prompt = `
-        You are a medical triage AI.
-
-        Your job:
-        - Analyze the user's text.
-        - Detect if it is a medical emergency or symptom.
-        - Respond ONLY in valid JSON (no explanation, no extra text).
-
-        Rules:
-
-        1. If input is a clear medical symptom/emergency:
-        Return:
-        {
-        "triageLevel": "HIGH" | "MEDIUM" | "LOW",
-        "firstAid": "string (max 255 chars) or null",
-        "hospitalLookupNeeded": true | false,
-        "code": "string (max 255 chars, example: HEART_ATTACK, ASTHMA, etc) or null"
-        }
-
-        2. If input is NOT medical:
-        Return:
-        {
-        "message": "Please ask a medical-related question."
-        }
-
-        3. If input is unclear or insufficient:
-        Return:
-        {
-        "message": "Please provide more clear medical symptoms."
-        }
-
-        Triage rules:
-        - HIGH → life-threatening (can't breathe, chest pain, dying, unconscious etc type high level symptoms)
-        - MEDIUM → moderate symptoms (fever, vomiting, pain etc type medium level symptoms)
-        - LOW → mild symptoms (headache, cold etc type low level symptoms)
-
-        Important:
-        - Output MUST be valid JSON
-        - NO markdown
-        - NO explanation
-        - NO extra text
-
-        User input:
-        "${userPrompt}"
+        Medical Triage. Output JSON ONLY. No markdown.
+        Medical input schema: {"triageLevel":"HIGH|MEDIUM|LOW","firstAid":"str","hospitalLookupNeeded":bool,"code":"CODE"}
+        Non-medical/Unclear schema: {"message":"str"}
+        Levels: HIGH(Critical), MEDIUM(Fever/Pain), LOW(Mild).
+        Input: "${userPrompt}"
         `;
         // Access the model (e.g., gemini-1.5-flash for speed or gemini-1.5-pro for complex tasks)
         const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
