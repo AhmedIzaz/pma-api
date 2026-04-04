@@ -72,4 +72,4 @@ networks:
   pma-network:
     driver: bridge
     driver_opts:
-      com.docker.network.driver.mtu: 1000
+      com.docker.network.driver.mtu: 1440

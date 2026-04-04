@@ -43,7 +43,8 @@ LABEL maintainer="pma-team"
 LABEL description="Personal Medical Assistant API"
 
 # Install wget for healthcheck (not included in alpine by default)
-RUN apk add --no-cache curl
+RUN sed -i 's/dl-cdn.alpinelinux.org/uk.alpinelinux.org/g' /etc/apk/repositories && \
+    apk add --no-cache curl
 
 WORKDIR /app
 
