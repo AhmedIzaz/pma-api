@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: pma-api
     ports:
-      - "${SERVER_PORT:-8000}:8000"
+      - "${SERVER_PORT:-9000}:9000"
     env_file:
       - .env.docker
     depends_on:
