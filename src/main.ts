@@ -12,7 +12,11 @@ async function bootstrap() {
  
   setupSwagger(app); //setup swagger
 
+
   const PORT = process.env.SERVER_PORT || 8000;
+  const base = process.env.API_BASE||""
+  console.log("base", base)
+  app.setGlobalPrefix(base)
   await app.listen(PORT);
   console.log('Server is running on port:', PORT);
 }
