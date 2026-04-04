@@ -43,7 +43,7 @@ LABEL maintainer="pma-team"
 LABEL description="Personal Medical Assistant API"
 
 # Install wget for healthcheck (not included in alpine by default)
-RUN apk add --no-cache wget
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
@@ -68,7 +68,7 @@ EXPOSE 9000
 
 # Healthcheck to verify the app is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9000 || exit 1
+  CMD curl-f http://localhost:9000 || exit 1
 
 # Start the application
 CMD ["node", "dist/src/main"]
