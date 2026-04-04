@@ -30,9 +30,11 @@ services:
     container_name: pma-mysql
     ports:
       - "3307:3306"
+    env_file:
+      - .env.docker
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS:-PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME:-personal_medical_assistant_db}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
