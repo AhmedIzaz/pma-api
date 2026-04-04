@@ -33,15 +33,15 @@ services:
     env_file:
       - .env.docker
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASS}
-      - MYSQL_DATABASE=${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:-PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-personal_medical_assistant_db}
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
     networks:
       - pma-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASS}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASS:-PASSWORD}"]
       interval: 10s
       timeout: 5s
       start_period: 30s
