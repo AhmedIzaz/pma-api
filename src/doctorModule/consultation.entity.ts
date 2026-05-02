@@ -47,7 +47,7 @@ export class ConsultationEntity {
 
   @Column({ type: 'int', default: 0 })
   durationMinutes: number;
-  
+
   @Column({ type: 'int', nullable: true })
   requestedDurationHours?: number;
 
