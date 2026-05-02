@@ -13,9 +13,9 @@ async function bootstrap() {
 
   // ─── Handlebars view engine setup ───────────────────────
   // __dirname = dist/src/ at runtime, so go up 2 levels to project root
-  app.setBaseViewsDir(join(__dirname, '..', '..', 'src', 'views'));
+  app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');
-  app.useStaticAssets(join(__dirname, '..', '..', 'src', 'public'));
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
   setupSwagger(app); //setup swagger
 
