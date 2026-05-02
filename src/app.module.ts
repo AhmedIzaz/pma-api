@@ -55,7 +55,7 @@ import { DoctorModule } from './doctorModule/doctor.module';
           retryAttempts: 10,
           retryDelay: 10 * 1000, // 10 seconds,
           logging: ['error'],
-          synchronize: true,
+          synchronize: false, // never ever make true
         })
       }
     }),
