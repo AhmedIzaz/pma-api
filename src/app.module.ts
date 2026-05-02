@@ -13,6 +13,7 @@ import { AuthGuard } from './common/guards/auth.guard';
 import { FirstAidModule } from './first-aid/first-aid.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RedisModule } from './redis/redis.module';
+import { DoctorModule } from './doctorModule/doctor.module';
 
 @Module({
   imports: [
@@ -54,7 +55,7 @@ import { RedisModule } from './redis/redis.module';
           retryAttempts: 10,
           retryDelay: 10 * 1000, // 10 seconds,
           logging: ['error'],
-          synchronize: false,
+          synchronize: true,
         })
       }
     }),
@@ -72,6 +73,8 @@ import { RedisModule } from './redis/redis.module';
 
     // feature modules
     UserModule,
+
+    DoctorModule,
 
     PromptModule,
 

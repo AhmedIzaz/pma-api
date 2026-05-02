@@ -4,7 +4,9 @@ import {
   Controller,
   Get,
   Post,
+  Req,
   SerializeOptions,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -13,15 +15,24 @@ import {
   UserLoginResponseDTO,
   UserRegistrationDTO,
   UserRegistrationResponseDTO,
+  BookAppointmentDTO,
+  UsersAppointmentListDTO,
 } from './user.dto';
 import { UserService } from './user.service';
+import { DoctorService } from 'src/doctorModule/doctor.service';
 import { Throttle } from '@nestjs/throttler';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { Roles, RolesGuard } from 'src/common/guards/roles.guard';
+import { TActorTypeEnum } from 'src/common/enums/database.enum';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(
+    private readonly userService: UserService,
+    private readonly doctorService: DoctorService,
+  ) { }
 
   @Get('/hello')
   async hello() {
@@ -69,5 +80,40 @@ export class UserController {
   })
   async googleOAuth(@Body() body: GoogleOAuthDTO): Promise<UserLoginResponseDTO> {
     return this.userService.googleOAuthLogin(body);
+  }
+
+  // ─── Doctor & Appointment Booking ────────────────────────
+  @Get('/doctors')
+  @ApiOperation({ summary: 'List all doctors and their services for patients' })
+
+  async getAllDoctors() {
+    return this.doctorService.getAllDoctorsWithServices();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Post('/appointments')
+  @ApiOperation({ summary: 'Book an appointment with a doctor' })
+
+  async bookAppointment(@Req() req, @Body() body: BookAppointmentDTO) {
+    return this.doctorService.createConsultation(body.doctorId, {
+      ...body,
+      userId: req.user.userId,
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Get('/appointments')
+  @ApiOperation({ summary: 'List all appointments taken by the logged-in user' })
+  @SerializeOptions({
+    type: UsersAppointmentListDTO,
+
+    excludeExtraneousValues: true,
+  })
+  async getUserAppointments(@Req() req) {
+    return this.doctorService.getUserConsultations(req.user.userId);
   }
 }

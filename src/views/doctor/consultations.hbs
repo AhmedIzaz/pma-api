@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consultations — PMA Doctor Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background-color: #0f172a; color: white; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .input-field { transition: all 0.3s; }
+    .input-field:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); border-color: #3b82f6; outline: none; }
+    .toast { transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .toast.show { transform: translateX(0); }
+  </style>
+</head>
+<body class="h-full flex overflow-hidden">
+  
+  <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+  <!-- Sidebar -->
+  <aside class="w-64 glass-card border-r border-white/10 h-full flex flex-col">
+    <div class="p-6">
+      <div class="flex items-center gap-3">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <i data-lucide="stethoscope" class="w-5 h-5 text-white"></i>
+        </div>
+        <span class="font-bold text-lg tracking-tight">Doctor Portal</span>
+      </div>
+    </div>
+    
+    <div class="px-3 pb-6 flex-1 flex flex-col gap-1">
+      <a href="/doctor/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 font-medium transition-colors">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        Dashboard
+      </a>
+      <a href="/doctor/services" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 font-medium transition-colors">
+        <i data-lucide="briefcase-medical" class="w-5 h-5"></i>
+        Services
+      </a>
+      <a href="/doctor/consultations" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 text-white font-medium">
+        <i data-lucide="calendar-days" class="w-5 h-5"></i>
+        Consultations
+      </a>
+    </div>
+
+    <div class="p-4 border-t border-white/10">
+      <button onclick="logout()" class="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-slate-400 hover:text-red-400 font-medium transition-colors">
+        <i data-lucide="log-out" class="w-5 h-5"></i>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 h-full overflow-y-auto bg-[#0a0f1d] relative">
+    <div class="p-8 max-w-6xl mx-auto space-y-8">
+      
+      <!-- Header -->
+      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-white tracking-tight">Consultations</h1>
+          <p class="text-slate-400 text-sm mt-1">Manage and join your patient appointments.</p>
+        </div>
+      </header>
+
+      <div id="loading" class="text-center py-10 text-slate-500">Loading consultations...</div>
+      
+      <div id="noConsultations" class="hidden glass-card rounded-2xl p-10 text-center">
+        <div class="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="calendar-x" class="w-8 h-8 text-blue-400"></i>
+        </div>
+        <h3 class="text-lg font-medium text-white mb-2">No upcoming consultations</h3>
+        <p class="text-slate-400 text-sm mb-6">Patients have not booked any appointments yet.</p>
+      </div>
+
+      <!-- Consultations List -->
+      <div class="flex flex-col gap-4" id="consultationsContainer"></div>
+    </div>
+
+    <!-- Modal Background for Reschedule -->
+    <div id="scheduleModal" class="hidden absolute inset-0 bg-[#0a0f1d]/80 flex items-center justify-center p-4 backdrop-blur-sm z-40 transition-opacity">
+      <div class="glass-card w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-white">Update Schedule</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="scheduleForm" class="p-6 space-y-4">
+          <input type="hidden" id="consultationIdModal" />
+          
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-300">New Start Time</label>
+            <input type="datetime-local" id="startTimeInput" required
+              class="input-field w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500" />
+          </div>
+          
+          <div class="pt-4 flex gap-3">
+            <button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-sm transition">Cancel</button>
+            <button type="submit" id="saveBtn" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition">Save Schedule</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+    
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colorMap = { success: 'bg-emerald-500/90 border-emerald-400', error: 'bg-red-500/90 border-red-400', info: 'bg-blue-500/90 border-blue-400' };
+      const iconMap = { success: 'check-circle', error: 'x-circle', info: 'info' };
+      toast.className = `toast ${colorMap[type]} border backdrop-blur-sm text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]`;
+      toast.innerHTML = `<i data-lucide="${iconMap[type]}" class="w-5 h-5"></i><span class="text-sm font-medium">${message}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons({ nodes: [toast] });
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
+    }
+
+    function logout() {
+      sessionStorage.removeItem('doctor_token');
+      sessionStorage.removeItem('doctor_info');
+      window.location.href = '/doctor/login';
+    }
+
+    const token = sessionStorage.getItem('doctor_token');
+    if (!token) window.location.href = '/doctor/login';
+
+    const renderConsultations = (consultations) => {
+      const container = document.getElementById('consultationsContainer');
+      const noData = document.getElementById('noConsultations');
+      
+      if (consultations.length === 0) {
+        container.innerHTML = '';
+        noData.classList.remove('hidden');
+        return;
+      }
+      
+      noData.classList.add('hidden');
+      container.innerHTML = consultations.map(c => {
+        const time = new Date(c.startTime);
+        const formattedDate = time.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        const formattedTimeDetail = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const serviceName = c.service ? c.service.serviceName : 'Custom Consultation';
+        const userName = c.user ? c.user.userName : 'Unknown Patient';
+        const userEmail = c.user ? c.user.userEmail : 'N/A';
+        const dur = c.requestedDurationHours || 1;
+        
+        let statusBadge = '';
+        if (c.status === 'SCHEDULED') statusBadge = '<span class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs font-semibold">Scheduled</span>';
+        else if (c.status === 'COMPLETED') statusBadge = '<span class="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs font-semibold">Completed</span>';
+        else statusBadge = `<span class="bg-slate-500/20 text-slate-400 px-2 py-1 rounded text-xs font-semibold">${c.status}</span>`;
+
+        // Strip seconds for datetime-local input safely preserving locale
+        const timeForInput = new Date(time.getTime() - (time.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+
+        return `
+        <div class="glass-card rounded-2xl p-6 relative border border-white/5 hover:border-white/10 transition-colors flex flex-col md:flex-row gap-6 md:items-center justify-between">
+          <div class="flex-1 space-y-3">
+            <div class="flex items-center gap-3">
+              <h3 class="font-semibold text-lg text-white">${serviceName}</h3>
+              ${statusBadge}
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 text-sm text-slate-400">
+              <div class="flex items-center gap-2">
+                <i data-lucide="user" class="w-4 h-4 text-emerald-400"></i>
+                <span class="text-white">${userName}</span> <span class="text-xs opacity-60">(${userEmail})</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-purple-400"></i>
+                ${formattedDate} &bull; ${formattedTimeDetail} &bull; ${dur} hr${dur > 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3 self-end md:self-center">
+            ${c.status === 'SCHEDULED' ? `
+              <button onclick="openRescheduleModal(${c.consultationId}, '${timeForInput}')" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium transition flex items-center gap-2">
+                 <i data-lucide="calendar-clock" class="w-4 h-4"></i> Reschedule
+              </button>
+            ` : ''}
+            
+            <button onclick="joinConference(${c.consultationId})" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2">
+               <i data-lucide="video" class="w-4 h-4"></i> Join
+            </button>
+          </div>
+        </div>
+      `;
+      }).join('');
+      
+      lucide.createIcons();
+    };
+
+    const fetchConsultations = async () => {
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('consultationsContainer').innerHTML = '';
+      document.getElementById('noConsultations').classList.add('hidden');
+      
+      try {
+        const res = await fetch('/{{apiBase}}/doctors/consultations', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401 || res.status === 403) return logout();
+        if (!res.ok) throw new Error('Failed to load consultations');
+        const data = await res.json();
+        
+        renderConsultations(data);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        document.getElementById('loading').classList.add('hidden');
+      }
+    };
+
+    // Modal behavior
+    const modal = document.getElementById('scheduleModal');
+    
+    window.openRescheduleModal = (id, currentStartTimeInputStr) => {
+      document.getElementById('scheduleForm').reset();
+      document.getElementById('consultationIdModal').value = id;
+      document.getElementById('startTimeInput').value = currentStartTimeInputStr;
+      modal.classList.remove('hidden');
+    };
+    
+    window.closeModal = () => {
+      modal.classList.add('hidden');
+    };
+
+    window.joinConference = (id) => {
+      showToast('Video conference feature coming soon!', 'info');
+      // In future: Redirect to video SDK room utilizing consultation id.
+    };
+
+    document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('consultationIdModal').value;
+      const startTimeVal = document.getElementById('startTimeInput').value;
+      const startTimeIsoDate = new Date(startTimeVal).toISOString();
+
+      const payload = {
+        startTime: startTimeIsoDate
+      };
+      
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+      
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/${id}/schedule`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+           const msg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+           throw new Error(msg || 'Failed to update schedule');
+        }
+        
+        showToast(`Schedule updated successfully!`);
+        closeModal();
+        fetchConsultations();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Save Schedule';
+      }
+    });
+
+    // initial fetch
+    fetchConsultations();
+  </script>
+</body>
+</html>

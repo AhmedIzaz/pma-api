@@ -12,7 +12,7 @@ import { comparePassword, generateHashPassword } from 'src/common/utility';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
-import { TRegistrationTypeEnum } from 'src/common/enums/database.enum';
+import { TActorTypeEnum, TRegistrationTypeEnum } from 'src/common/enums/database.enum';
 
 @Injectable()
 export class UserService {
@@ -71,6 +71,7 @@ export class UserService {
         userId: existingUser?.userId,
         userName: existingUser?.userName,
         userEmail,
+        actorType: TActorTypeEnum.USER,
       };
 
       const accessToken = await this.jwtService.signAsync(jwtPayload);
