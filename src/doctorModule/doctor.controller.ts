@@ -29,6 +29,7 @@ import {
   DoctorRegistrationResponseDTO,
   UpdateDoctorServiceDTO,
   UpdateConsultationScheduleDTO,
+  UpdateConsultationDurationDTO,
 } from './doctor.dto';
 
 @ApiTags('Doctors')
@@ -180,6 +181,23 @@ export class DoctorController {
     @Body() body: UpdateConsultationScheduleDTO,
   ) {
     return this.doctorService.updateConsultationSchedule(
+      req.user.userId,
+      id,
+      body,
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.DOCTOR])
+  @Patch('/consultations/:id/duration')
+  @ApiOperation({ summary: 'Update the duration spent in a consultation' })
+  async updateConsultationDuration(
+    @Req() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateConsultationDurationDTO,
+  ) {
+    return this.doctorService.updateConsultationDuration(
       req.user.userId,
       id,
       body,

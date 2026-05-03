@@ -30,7 +30,10 @@ export class ConsultationRepository {
   }
 
   async findById(consultationId: number, manager?: EntityManager) {
-    return this.repository(manager)?.findOneBy({ consultationId });
+    return this.repository(manager)?.findOne({
+      where: { consultationId },
+      relations: ['doctor', 'user', 'service'],
+    });
   }
 
   async create(

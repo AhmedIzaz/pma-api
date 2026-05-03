@@ -17,6 +17,7 @@ import {
   DoctorLoginResponseDTO,
   DoctorRegistrationDTO,
   UpdateDoctorServiceDTO,
+  UpdateConsultationDurationDTO,
 } from './doctor.dto';
 import { comparePassword, generateHashPassword } from 'src/common/utility';
 import {
@@ -31,7 +32,7 @@ export class DoctorService {
     private readonly doctorServiceRepository: DoctorServiceRepository,
     private readonly consultationRepository: ConsultationRepository,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   // ─── Auth ───────────────────────────────────────────────
 
@@ -184,6 +185,10 @@ export class DoctorService {
     return this.consultationRepository.findByUserId(userId);
   }
 
+  async getConsultationById(consultationId: number) {
+    return this.consultationRepository.findById(consultationId);
+  }
+
   async updateConsultationSchedule(
     doctorId: number,
     consultationId: number,
@@ -199,6 +204,29 @@ export class DoctorService {
 
     return this.consultationRepository.update(consultationId, {
       startTime: new Date(data.startTime),
+    });
+  }
+
+  async updateConsultationDuration(
+    doctorId: number,
+    consultationId: number,
+    data: UpdateConsultationDurationDTO,
+  ) {
+    const consultation = await this.consultationRepository.findById(consultationId);
+    if (!consultation) {
+      throw new NotFoundException('Consultation not found');
+    }
+    if (consultation.doctorId !== doctorId) {
+      throw new ForbiddenException('You do not own this consultation');
+    }
+
+    const durationMinutes = (consultation.durationMinutes || 0) + data.spentMinutes;
+
+
+
+    return this.consultationRepository.update(consultationId, {
+      durationMinutes,
+
     });
   }
 
@@ -220,9 +248,10 @@ export class DoctorService {
 
     const endTime = new Date(data.endTime);
     const startTime = new Date(consultation.startTime);
-    const durationMinutes = Math.round(
+    const calculatedDuration = Math.round(
       (endTime.getTime() - startTime.getTime()) / (1000 * 60),
     );
+    const durationMinutes = Math.max(calculatedDuration, consultation.durationMinutes || 0);
 
     // Calculate earnings based on linked service, if any
     let amountEarned = 0;

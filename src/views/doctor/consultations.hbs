@@ -203,7 +203,7 @@
                  <i data-lucide="calendar-clock" class="w-4 h-4"></i> Reschedule
               </button>
             ` : ''}
-            
+            {{!-- TODO: By clicking Join, should redirect to conference join page /doctor/conference/:consultationId --}}
             <button onclick="joinConference(${c.consultationId})" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2">
                <i data-lucide="video" class="w-4 h-4"></i> Join
             </button>
@@ -251,8 +251,7 @@
     };
 
     window.joinConference = (id) => {
-      showToast('Video conference feature coming soon!', 'info');
-      // In future: Redirect to video SDK room utilizing consultation id.
+      window.location.href = `/doctor/conference/${id}`;
     };
 
     document.getElementById('scheduleForm').addEventListener('submit', async (e) => {

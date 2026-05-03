@@ -29,6 +29,7 @@ async function bootstrap() {
       '/doctor/dashboard',
       '/doctor/services',
       '/doctor/consultations',
+      '/doctor/conference/:id',
     ],
   });
   await app.listen(PORT);

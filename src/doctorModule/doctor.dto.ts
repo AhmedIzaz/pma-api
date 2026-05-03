@@ -210,6 +210,13 @@ export class UpdateConsultationScheduleDTO {
   startTime: string;
 }
 
+export class UpdateConsultationDurationDTO {
+  @IsNumber()
+  @IsNotEmpty()
+  @ApiProperty({ type: 'number', description: 'Duration spent in minutes', required: true, example: 30 })
+  spentMinutes: number;
+}
+
 // ─── Dashboard ──────────────────────────────────────────
 
 export class DashboardResponseDTO {
