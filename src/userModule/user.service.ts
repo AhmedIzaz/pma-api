@@ -23,6 +23,10 @@ export class UserService {
     private readonly configService: ConfigService<TEnvironmentVariables>,
   ) { }
 
+  async findUserById(userId: number) {
+    return await this.userRepository.findById(userId);
+  }
+
   async userRegistration(data: UserRegistrationDTO) {
     try {
       const { userName, userEmail, userPassword } = data ?? {};

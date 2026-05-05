@@ -4,12 +4,14 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  OneToOne,
 } from 'typeorm';
 import { CommonDateEntity } from 'src/common/entities/date.entity';
 import { DoctorEntity } from './doctor.entity';
 import { DoctorServiceEntity } from './doctor-service.entity';
 import { TConsultationStatusEnum } from 'src/common/enums/database.enum';
 import { UserEntity } from 'src/userModule/user.entity';
+import { PaymentEntity } from 'src/paymentModule/payment.entity';
 
 @Entity('consultations')
 export class ConsultationEntity {
@@ -63,4 +65,10 @@ export class ConsultationEntity {
 
   @Column(() => CommonDateEntity, { prefix: false })
   dateInfo: CommonDateEntity;
+
+  @OneToOne(() => PaymentEntity, (payment) => payment.consultation, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  payment?: PaymentEntity;
 }

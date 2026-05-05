@@ -12,6 +12,8 @@ fi
 
 echo "🚀 Generating migration: $NAME"
 
+yarn build
+
 npx typeorm-ts-node-commonjs migration:generate  \
     -d database/data-source.ts   \
     database/migrations/"$NAME"

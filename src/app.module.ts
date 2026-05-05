@@ -14,6 +14,7 @@ import { FirstAidModule } from './first-aid/first-aid.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RedisModule } from './redis/redis.module';
 import { DoctorModule } from './doctorModule/doctor.module';
+import { PaymentModule } from './paymentModule/payment.module';
 
 @Module({
   imports: [
@@ -83,6 +84,8 @@ import { DoctorModule } from './doctorModule/doctor.module';
     FirstAidModule,
 
     RedisModule,
+
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [
