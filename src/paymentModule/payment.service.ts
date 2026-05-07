@@ -18,7 +18,8 @@ export class PaymentService {
     private readonly paymentRepository: Repository<PaymentEntity>,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
-    private readonly doctorService: DoctorService
+    private readonly doctorService: DoctorService,
+
   ) { }
 
   private getSslCredentials() {
@@ -70,6 +71,7 @@ export class PaymentService {
 
     // Prepare SSLCommerz Payload
     const protocol = domain.includes('localhost') ? 'http' : 'https';
+    const apiBase = this.configService.get<string>('API_BASE') || '';
 
     // We use URLSearchParams because SSLCommerz expects application/x-www-form-urlencoded
     const payload = new URLSearchParams();
@@ -78,10 +80,10 @@ export class PaymentService {
     payload.append('total_amount', amount.toString());
     payload.append('currency', currency);
     payload.append('tran_id', tran_id);
-    payload.append('success_url', `${protocol}://${domain}/doctor/payments/success`);
-    payload.append('fail_url', `${protocol}://${domain}/doctor/payments/fail`);
-    payload.append('cancel_url', `${protocol}://${domain}/doctor/payments/cancel`);
-    payload.append('ipn_url', `${protocol}://${domain}/doctor/payments/ipn`);
+    payload.append('success_url', `${protocol}://${domain}/${apiBase}/doctor/payments/success`);
+    payload.append('fail_url', `${protocol}://${domain}/${apiBase}/doctor/payments/fail`);
+    payload.append('cancel_url', `${protocol}://${domain}/${apiBase}/doctor/payments/cancel`);
+    payload.append('ipn_url', `${protocol}://${domain}/${apiBase}/doctor/payments/ipn`);
     payload.append('cus_name', `User ${userId}`);
     payload.append('cus_email', `user${userId}@example.com`);
     payload.append('cus_add1', 'Dhaka');
