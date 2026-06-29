@@ -71,4 +71,8 @@ export class ConsultationEntity {
     onDelete: 'SET NULL',
   })
   payment?: PaymentEntity;
+
+  // diagnosis -> text field, doctor will save the diagnosis related info. // this field would be use to verify using blockchain.
+  @Column({ type: 'text', nullable: true })
+  diagnosis?: string;
 }

@@ -8,6 +8,8 @@ import { JwtService } from '@nestjs/jwt';
 import { DoctorRepository } from './doctor.repository';
 import { DoctorServiceRepository } from './doctor-service.repository';
 import { ConsultationRepository } from './consultation.repository';
+import { PrescriptionRepository } from './prescription.repository';
+import { GoogleDriveService } from './google-drive.service';
 import {
   CompleteConsultationDTO,
   CreateConsultationDTO,
@@ -31,6 +33,8 @@ export class DoctorService {
     private readonly doctorRepository: DoctorRepository,
     private readonly doctorServiceRepository: DoctorServiceRepository,
     private readonly consultationRepository: ConsultationRepository,
+    private readonly prescriptionRepository: PrescriptionRepository,
+    private readonly googleDriveService: GoogleDriveService,
     private readonly jwtService: JwtService,
   ) { }
 
@@ -272,6 +276,42 @@ export class DoctorService {
       durationMinutes: Math.max(durationMinutes, 0),
       amountEarned,
       status: TConsultationStatusEnum.COMPLETED,
+    });
+  }
+
+  async getPrescriptionsByConsultationId(doctorId: number, consultationId: number) {
+    const consultation = await this.consultationRepository.findById(consultationId);
+    if (!consultation) {
+      throw new NotFoundException('Consultation not found');
+    }
+    if (consultation.doctorId !== doctorId) {
+      throw new ForbiddenException('You do not own this consultation');
+    }
+
+    return this.prescriptionRepository.findByConsultationId(consultationId);
+  }
+
+  async uploadPrescription(
+    doctorId: number,
+    consultationId: number,
+    file: Express.Multer.File,
+  ) {
+    const consultation = await this.consultationRepository.findById(consultationId);
+    if (!consultation) {
+      throw new NotFoundException('Consultation not found');
+    }
+    if (consultation.doctorId !== doctorId) {
+      throw new ForbiddenException('You do not own this consultation');
+    }
+
+    // Upload to Google Drive
+    const fileRef = await this.googleDriveService.uploadFile(file);
+
+    // Save to DB
+    return this.prescriptionRepository.create({
+      consultationId,
+      fileRef,
+      fileName: file.originalname,
     });
   }
 

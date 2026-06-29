@@ -12,7 +12,12 @@ import {
   SerializeOptions,
   UseGuards,
   UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthGuard } from 'src/common/guards/auth.guard';
@@ -202,5 +207,42 @@ export class DoctorController {
       id,
       body,
     );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.DOCTOR])
+  @Get('/consultations/:id/prescriptions')
+  @ApiOperation({ summary: 'Get prescriptions for a specific consultation' })
+  async getConsultationPrescriptions(
+    @Req() req,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.doctorService.getPrescriptionsByConsultationId(
+      req.user.userId,
+      id,
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.DOCTOR])
+  @Post('/consultations/:id/prescriptions')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a prescription for a specific consultation' })
+  async uploadConsultationPrescription(
+    @Req() req,
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: /^(application\/pdf|application\/msword|application\/vnd.openxmlformats-officedocument.wordprocessingml.document|image\/jpeg|image\/png)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.doctorService.uploadPrescription(req.user.userId, id, file);
   }
 }

@@ -122,6 +122,48 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal Background for Prescriptions -->
+    <div id="prescriptionModal" class="hidden absolute inset-0 bg-[#0a0f1d]/80 flex items-center justify-center p-4 backdrop-blur-sm z-40 transition-opacity">
+      <div class="glass-card w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-white">Prescriptions</h3>
+          <button onclick="closePrescriptionModal()" class="text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="p-6 flex-1 overflow-y-auto space-y-6">
+          
+          <!-- Upload Form -->
+          <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+            <h4 class="text-sm font-medium text-slate-300 mb-3">Upload New Prescription</h4>
+            <form id="prescriptionForm" class="flex flex-col gap-3">
+              <input type="hidden" id="prescriptionConsultationId" />
+              <input type="file" id="prescriptionFile" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                class="block w-full text-sm text-slate-400
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-500/10 file:text-blue-400
+                hover:file:bg-blue-500/20" />
+              <button type="submit" id="uploadPrescriptionBtn" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition self-end flex items-center gap-2">
+                <i data-lucide="upload" class="w-4 h-4"></i> Upload (Max 5MB)
+              </button>
+            </form>
+          </div>
+
+          <!-- Existing Prescriptions -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-medium text-slate-300">Previously Uploaded (<span id="prescriptionCount">0</span>)</h4>
+            </div>
+            <div id="prescriptionList" class="space-y-3">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script>
@@ -198,6 +240,9 @@
           </div>
           
           <div class="flex items-center gap-3 self-end md:self-center">
+            <button onclick="openPrescriptionModal(${c.consultationId})" class="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-sm font-medium transition flex items-center gap-2">
+               <i data-lucide="file-text" class="w-4 h-4"></i> Prescriptions
+            </button>
             ${c.status === 'SCHEDULED' ? `
               <button onclick="openRescheduleModal(${c.consultationId}, '${timeForInput}')" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium transition flex items-center gap-2">
                  <i data-lucide="calendar-clock" class="w-4 h-4"></i> Reschedule
@@ -238,6 +283,7 @@
 
     // Modal behavior
     const modal = document.getElementById('scheduleModal');
+    const prescriptionModal = document.getElementById('prescriptionModal');
     
     window.openRescheduleModal = (id, currentStartTimeInputStr) => {
       document.getElementById('scheduleForm').reset();
@@ -248,6 +294,19 @@
     
     window.closeModal = () => {
       modal.classList.add('hidden');
+    };
+
+    window.openPrescriptionModal = (id) => {
+      document.getElementById('prescriptionForm').reset();
+      document.getElementById('prescriptionConsultationId').value = id;
+      document.getElementById('prescriptionList').innerHTML = '<div class="text-sm text-slate-500 text-center py-4">Loading...</div>';
+      document.getElementById('prescriptionCount').innerText = '...';
+      prescriptionModal.classList.remove('hidden');
+      fetchPrescriptions(id);
+    };
+
+    window.closePrescriptionModal = () => {
+      prescriptionModal.classList.add('hidden');
     };
 
     window.joinConference = (id) => {
@@ -292,6 +351,93 @@
       } finally {
         btn.disabled = false;
         btn.innerText = 'Save Schedule';
+      }
+    });
+
+    const fetchPrescriptions = async (consultationId) => {
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/${consultationId}/prescriptions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch prescriptions');
+        const data = await res.json();
+        
+        document.getElementById('prescriptionCount').innerText = data.length;
+        
+        if (data.length === 0) {
+          document.getElementById('prescriptionList').innerHTML = '<div class="text-sm text-slate-500 text-center py-4 bg-white/5 rounded-xl border border-white/5">No prescriptions uploaded yet.</div>';
+          return;
+        }
+
+        document.getElementById('prescriptionList').innerHTML = data.map(p => `
+          <div class="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <i data-lucide="file" class="w-5 h-5 text-blue-400"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-white line-clamp-1">${p.fileName || 'Prescription Document'}</p>
+                <p class="text-xs text-slate-400">${new Date(p.dateInfo.createdAt).toLocaleString()}</p>
+              </div>
+            </div>
+            <a href="${p.fileRef}" target="_blank" class="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition" title="View Document">
+              <i data-lucide="external-link" class="w-4 h-4"></i>
+            </a>
+          </div>
+        `).join('');
+        
+        lucide.createIcons();
+      } catch (err) {
+        document.getElementById('prescriptionList').innerHTML = `<div class="text-sm text-red-400 text-center py-4">${err.message}</div>`;
+      }
+    };
+
+    document.getElementById('prescriptionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('prescriptionConsultationId').value;
+      const fileInput = document.getElementById('prescriptionFile');
+      
+      if (!fileInput.files.length) return;
+      const file = fileInput.files[0];
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('File size must be 5MB or less.', 'error');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const btn = document.getElementById('uploadPrescriptionBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Uploading...';
+      lucide.createIcons();
+      
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/${id}/prescriptions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+           const msg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+           throw new Error(msg || 'Failed to upload prescription');
+        }
+        
+        showToast('Prescription uploaded successfully!');
+        fileInput.value = '';
+        fetchPrescriptions(id);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        lucide.createIcons();
       }
     });
 

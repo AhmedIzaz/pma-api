@@ -108,9 +108,9 @@ export class UserController {
   @Roles([TActorTypeEnum.USER])
   @Get('/appointments')
   @ApiOperation({ summary: 'List all appointments taken by the logged-in user' })
+  @UseInterceptors(ClassSerializerInterceptor)
   @SerializeOptions({
     type: UsersAppointmentListDTO,
-
     excludeExtraneousValues: true,
   })
   async getUserAppointments(@Req() req) {

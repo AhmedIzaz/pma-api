@@ -10,6 +10,9 @@ import { DoctorService } from './doctor.service';
 import { DoctorRepository } from './doctor.repository';
 import { DoctorServiceRepository } from './doctor-service.repository';
 import { ConsultationRepository } from './consultation.repository';
+import { PrescriptionEntity } from './prescription.entity';
+import { PrescriptionRepository } from './prescription.repository';
+import { GoogleDriveService } from './google-drive.service';
 
 @Module({
   imports: [
@@ -17,6 +20,7 @@ import { ConsultationRepository } from './consultation.repository';
       DoctorEntity,
       DoctorServiceEntity,
       ConsultationEntity,
+      PrescriptionEntity,
     ]),
     ConfigModule,
   ],
@@ -26,6 +30,8 @@ import { ConsultationRepository } from './consultation.repository';
     DoctorRepository,
     DoctorServiceRepository,
     ConsultationRepository,
+    PrescriptionRepository,
+    GoogleDriveService,
   ],
   exports: [TypeOrmModule, DoctorService, DoctorRepository],
 })
