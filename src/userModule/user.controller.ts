@@ -8,6 +8,7 @@ import {
   SerializeOptions,
   UseGuards,
   UseInterceptors,
+  Param,
 } from '@nestjs/common';
 import {
   GoogleOAuthDTO,
@@ -17,6 +18,7 @@ import {
   UserRegistrationResponseDTO,
   BookAppointmentDTO,
   UsersAppointmentListDTO,
+  PrescriptionResponseDTO,
 } from './user.dto';
 import { UserService } from './user.service';
 import { DoctorService } from 'src/doctorModule/doctor.service';
@@ -115,5 +117,20 @@ export class UserController {
   })
   async getUserAppointments(@Req() req) {
     return this.doctorService.getUserConsultations(req.user.userId);
+  }
+
+  // implement api for getting prescriptions of per consultations route -> /consultations/:id/prescriptions including DTO and other common things
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Get('/consultations/:id/prescriptions')
+  @ApiOperation({ summary: 'Get prescriptions for a specific consultation' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: PrescriptionResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  async getConsultationPrescriptions(@Req() req, @Param('id') id: string) {
+    return this.doctorService.getConsultationPrescriptions(Number(id), req.user.userId);
   }
 }

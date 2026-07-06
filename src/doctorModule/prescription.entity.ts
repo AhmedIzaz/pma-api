@@ -21,6 +21,17 @@ export class PrescriptionEntity {
     @Column({ type: 'varchar', length: 255, nullable: true })
     fileName: string;
 
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    fileHash: string;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    blockchainTxHash: string;
+
+    @Column({ type: 'int', nullable: true })
+    blockchainId: number;
+
     @Column(() => CommonDateEntity, { prefix: false })
     dateInfo: CommonDateEntity;
+
+
 }

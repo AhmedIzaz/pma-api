@@ -13,6 +13,8 @@ import { ConsultationRepository } from './consultation.repository';
 import { PrescriptionEntity } from './prescription.entity';
 import { PrescriptionRepository } from './prescription.repository';
 import { GoogleDriveService } from './google-drive.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
+import { BlockchainModule } from 'src/blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { GoogleDriveService } from './google-drive.service';
       PrescriptionEntity,
     ]),
     ConfigModule,
+    BlockchainModule
   ],
   controllers: [DoctorController, DoctorViewController],
   providers: [
@@ -32,7 +35,8 @@ import { GoogleDriveService } from './google-drive.service';
     ConsultationRepository,
     PrescriptionRepository,
     GoogleDriveService,
+    BlockchainService,
   ],
   exports: [TypeOrmModule, DoctorService, DoctorRepository],
 })
-export class DoctorModule {}
+export class DoctorModule { }

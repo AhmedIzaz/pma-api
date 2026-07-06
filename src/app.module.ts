@@ -15,6 +15,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RedisModule } from './redis/redis.module';
 import { DoctorModule } from './doctorModule/doctor.module';
 import { PaymentModule } from './paymentModule/payment.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -73,6 +74,9 @@ import { PaymentModule } from './paymentModule/payment.module';
 
 
     // feature modules
+
+    BlockchainModule,
+
     UserModule,
 
     DoctorModule,

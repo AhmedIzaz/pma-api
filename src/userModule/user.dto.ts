@@ -9,7 +9,7 @@ import {
   Length,
 } from 'class-validator';
 import { DoctorBaseDTO, DoctorServiceResponseDTO } from 'src/doctorModule/doctor.dto';
-
+import { CommonDateEntity } from 'src/common/entities/date.entity';
 class UserBaseDTO {
   @IsNumber()
   @IsNotEmpty()
@@ -115,6 +115,27 @@ export class UsersAppointmentListDTO {
   @Expose()
   @Type(() => DoctorServiceResponseDTO)
   service: DoctorServiceResponseDTO
+}
 
+@Exclude()
+export class PrescriptionResponseDTO {
+  @Expose()
+  @ApiProperty()
+  prescriptionId: number;
 
+  @Expose()
+  @ApiProperty()
+  consultationId: number;
+
+  @Expose()
+  @ApiProperty()
+  fileRef: string;
+
+  @Expose()
+  @ApiProperty()
+  fileName: string;
+
+  @Expose()
+  @ApiProperty()
+  dateInfo: CommonDateEntity;
 }

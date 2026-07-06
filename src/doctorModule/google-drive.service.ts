@@ -41,10 +41,10 @@ export class GoogleDriveService {
 
     try {
       const res = await this.drive.files.create({
+        supportsAllDrives: true, // Required for Shared Drives
         requestBody: fileMetadata,
         media: media,
         fields: 'id, webViewLink',
-        supportsAllDrives: true
       });
 
       const fileId = res.data.id;

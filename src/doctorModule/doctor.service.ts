@@ -10,6 +10,8 @@ import { DoctorServiceRepository } from './doctor-service.repository';
 import { ConsultationRepository } from './consultation.repository';
 import { PrescriptionRepository } from './prescription.repository';
 import { GoogleDriveService } from './google-drive.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
+import * as crypto from 'crypto';
 import {
   CompleteConsultationDTO,
   CreateConsultationDTO,
@@ -35,6 +37,7 @@ export class DoctorService {
     private readonly consultationRepository: ConsultationRepository,
     private readonly prescriptionRepository: PrescriptionRepository,
     private readonly googleDriveService: GoogleDriveService,
+    private readonly blockchainService: BlockchainService,
     private readonly jwtService: JwtService,
   ) { }
 
@@ -291,6 +294,18 @@ export class DoctorService {
     return this.prescriptionRepository.findByConsultationId(consultationId);
   }
 
+  async getConsultationPrescriptions(consultationId: number, userId: number) {
+    const consultation = await this.consultationRepository.findById(consultationId);
+    if (!consultation) {
+      throw new NotFoundException('Consultation not found');
+    }
+    if (consultation.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this consultation');
+    }
+
+    return this.prescriptionRepository.findByConsultationId(consultationId);
+  }
+
   async uploadPrescription(
     doctorId: number,
     consultationId: number,
@@ -304,15 +319,37 @@ export class DoctorService {
       throw new ForbiddenException('You do not own this consultation');
     }
 
+
     // Upload to Google Drive
     const fileRef = await this.googleDriveService.uploadFile(file);
 
-    // Save to DB
-    return this.prescriptionRepository.create({
+    // Create a unique hash identical to only that file content
+    const fileHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+
+    // Save to DB initially
+    const prescription = await this.prescriptionRepository.create({
       consultationId,
       fileRef,
       fileName: file.originalname,
+      fileHash,
     });
+    console.log("The file hash =>", { fileHash })
+
+    // Run blockchain store in background
+    setImmediate(async () => {
+      try {
+        const { txHash, blockchainId } = await this.blockchainService.storeDataOnChain(fileHash);
+        console.log('Blockchain store result:', { txHash, blockchainId });
+        await this.prescriptionRepository.update(prescription.prescriptionId, {
+          blockchainTxHash: txHash,
+          blockchainId,
+        });
+      } catch (error) {
+        console.error('Failed to store prescription hash on blockchain:', error);
+      }
+    });
+
+    return prescription;
   }
 
   // ─── Dashboard ─────────────────────────────────────────

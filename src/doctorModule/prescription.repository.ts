@@ -21,4 +21,8 @@ export class PrescriptionRepository {
       order: { dateInfo: { createdAt: 'DESC' } },
     });
   }
+
+  async update(id: number, data: Partial<PrescriptionEntity>): Promise<void> {
+    await this.repository.update(id, data);
+  }
 }
