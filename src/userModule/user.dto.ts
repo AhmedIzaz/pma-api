@@ -139,3 +139,30 @@ export class PrescriptionResponseDTO {
   @ApiProperty()
   dateInfo: CommonDateEntity;
 }
+
+@Exclude()
+export class VerifyPrescriptionResponseDTO {
+  @Expose()
+  @ApiProperty({ description: 'Indicates if the file hash matches the hash stored in the database' })
+  isDbMatch: boolean;
+
+  @Expose()
+  @ApiProperty({ description: 'Indicates if the file hash matches the hash stored in the blockchain' })
+  isBlockchainMatch: boolean;
+
+  @Expose()
+  @ApiProperty({ description: 'The SHA256 hash of the provided file' })
+  fileHash: string;
+
+  @Expose()
+  @ApiProperty({ description: 'The SHA256 hash stored in the database' })
+  storedHash: string;
+
+  @Expose()
+  @ApiPropertyOptional({ description: 'The blockchain transaction hash, if available' })
+  blockchainTxHash?: string;
+
+  @Expose()
+  @ApiPropertyOptional({ description: 'The blockchain record ID, if available' })
+  blockchainId?: number;
+}

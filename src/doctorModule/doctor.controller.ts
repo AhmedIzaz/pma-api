@@ -16,6 +16,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -36,6 +37,7 @@ import {
   UpdateConsultationScheduleDTO,
   UpdateConsultationDurationDTO,
 } from './doctor.dto';
+import { VerifyPrescriptionResponseDTO } from 'src/userModule/user.dto';
 
 @ApiTags('Doctors')
 @Controller('doctors')
@@ -244,5 +246,26 @@ export class DoctorController {
     file: Express.Multer.File,
   ) {
     return this.doctorService.uploadPrescription(req.user.userId, id, file);
+  }
+
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.DOCTOR])
+  @Post('/consultations/prescriptions/:prescriptionId/verify')
+  @ApiOperation({ summary: 'Verify a prescription file against DB and Blockchain' })
+  @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('file'))
+  @SerializeOptions({
+    type: VerifyPrescriptionResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  async verifyPrescription(
+    @Param('prescriptionId') prescriptionId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required for verification');
+    }
+    return this.doctorService.verifyPrescription(Number(prescriptionId), file);
   }
 }

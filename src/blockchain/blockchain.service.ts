@@ -84,4 +84,9 @@ export class BlockchainService implements OnModuleInit {
             timestamp: new Date(Number(result[3]) * 1000).toISOString(),
         };
     }
+
+    verifyDataHash(data: string, onChainDataHash: string): boolean {
+        const dataHash = ethers.keccak256(ethers.toUtf8Bytes(data));
+        return dataHash === onChainDataHash;
+    }
 }

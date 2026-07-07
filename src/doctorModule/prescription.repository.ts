@@ -25,4 +25,8 @@ export class PrescriptionRepository {
   async update(id: number, data: Partial<PrescriptionEntity>): Promise<void> {
     await this.repository.update(id, data);
   }
+
+  async findById(prescriptionId: number): Promise<PrescriptionEntity | null> {
+    return this.repository.findOne({ where: { prescriptionId } });
+  }
 }

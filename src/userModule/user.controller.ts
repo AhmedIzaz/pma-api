@@ -9,7 +9,10 @@ import {
   UseGuards,
   UseInterceptors,
   Param,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   GoogleOAuthDTO,
   UserLoginDTO,
@@ -19,6 +22,7 @@ import {
   BookAppointmentDTO,
   UsersAppointmentListDTO,
   PrescriptionResponseDTO,
+  VerifyPrescriptionResponseDTO,
 } from './user.dto';
 import { UserService } from './user.service';
 import { DoctorService } from 'src/doctorModule/doctor.service';
@@ -132,5 +136,26 @@ export class UserController {
   })
   async getConsultationPrescriptions(@Req() req, @Param('id') id: string) {
     return this.doctorService.getConsultationPrescriptions(Number(id), req.user.userId);
+  }
+
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Post('/prescriptions/:id/verify')
+  @ApiOperation({ summary: 'Verify a prescription file against DB and Blockchain' })
+  @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('file'))
+  @SerializeOptions({
+    type: VerifyPrescriptionResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  async verifyPrescription(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required for verification');
+    }
+    return this.doctorService.verifyPrescription(Number(id), file);
   }
 }

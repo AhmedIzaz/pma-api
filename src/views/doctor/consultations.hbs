@@ -164,6 +164,40 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Background for Verification -->
+    <div id="verifyModal" class="hidden absolute inset-0 bg-[#0a0f1d]/80 flex items-center justify-center p-4 backdrop-blur-sm z-50 transition-opacity">
+      <div class="glass-card w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-white">Verify Prescription</h3>
+          <button onclick="closeVerifyModal()" class="text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="verifyForm" class="p-6 space-y-4">
+          <input type="hidden" id="verifyPrescriptionId" />
+          
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-300">Upload file to verify</label>
+            <input type="file" id="verifyFile" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              class="block w-full text-sm text-slate-400
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-blue-500/10 file:text-blue-400
+              hover:file:bg-blue-500/20" />
+          </div>
+          
+          <div class="pt-4 flex gap-3">
+            <button type="button" onclick="closeVerifyModal()" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-sm transition">Cancel</button>
+            <button type="submit" id="verifyBtn" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition flex items-center justify-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4"></i> Verify
+            </button>
+          </div>
+        </form>
+        <div id="verifyResult" class="hidden px-6 pb-6 text-sm"></div>
+      </div>
+    </div>
   </main>
 
   <script>
@@ -380,9 +414,14 @@
                 <p class="text-xs text-slate-400">${new Date(p.dateInfo.createdAt).toLocaleString()}</p>
               </div>
             </div>
-            <a href="${p.fileRef}" target="_blank" class="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition" title="View Document">
-              <i data-lucide="external-link" class="w-4 h-4"></i>
-            </a>
+            <div class="flex items-center gap-2">
+              <button onclick="openVerifyModal('${p.prescriptionId}')" class="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium transition flex items-center gap-1" title="Verify Document">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> <span class="hidden sm:inline">Verify</span>
+              </button>
+              <a href="${p.fileRef}" target="_blank" class="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition" title="View Document">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>
+            </div>
           </div>
         `).join('');
         
@@ -434,6 +473,88 @@
         fetchPrescriptions(id);
       } catch (err) {
         showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        lucide.createIcons();
+      }
+    });
+
+    const verifyModal = document.getElementById('verifyModal');
+
+    window.openVerifyModal = (id) => {
+      document.getElementById('verifyForm').reset();
+      document.getElementById('verifyPrescriptionId').value = id;
+      document.getElementById('verifyResult').classList.add('hidden');
+      verifyModal.classList.remove('hidden');
+    };
+
+    window.closeVerifyModal = () => {
+      verifyModal.classList.add('hidden');
+    };
+
+    document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('verifyPrescriptionId').value;
+      const fileInput = document.getElementById('verifyFile');
+      
+      if (!fileInput.files.length) return;
+      const file = fileInput.files[0];
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const btn = document.getElementById('verifyBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Verifying...';
+      lucide.createIcons();
+      
+      const resultContainer = document.getElementById('verifyResult');
+      resultContainer.classList.remove('hidden');
+      resultContainer.innerHTML = '<div class="text-slate-400">Verifying...</div>';
+
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/prescriptions/${id}/verify`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        const data = await res.json();
+
+        console.log({
+          data
+        })
+        
+        if (!res.ok) {
+           const msg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+           throw new Error(msg || 'Failed to verify prescription');
+        }
+        
+        if (data?.isBlockchainMatch && data?.isDbMatch) {
+          resultContainer.innerHTML = `
+            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+              <p class="font-semibold flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Verification Successful</p>
+              <p class="mt-1 opacity-80 text-xs">The file matches the database and blockchain records.</p>
+            </div>
+          `;
+        }
+      
+         else {
+          resultContainer.innerHTML = `
+            <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+              <p class="font-semibold flex items-center gap-2"><i data-lucide="x-circle" class="w-4 h-4"></i> Verification Failed</p>
+              <p class="mt-1 opacity-80 text-xs">The file does not match the original prescription.</p>
+            </div>
+          `;
+        }
+        lucide.createIcons();
+      } catch (err) {
+        showToast(err.message, 'error');
+        resultContainer.innerHTML = `<div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">${err.message}</div>`;
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;

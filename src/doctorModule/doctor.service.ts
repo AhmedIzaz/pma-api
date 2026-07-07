@@ -351,7 +351,37 @@ export class DoctorService {
 
     return prescription;
   }
+  async verifyPrescription(prescriptionId: number, file: Express.Multer.File) {
+    const prescription = await this.prescriptionRepository.findById(prescriptionId);
+    if (!prescription) {
+      throw new NotFoundException('Prescription not found');
+    }
 
+
+
+    const fileHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+
+    const isDbMatch = fileHash === prescription.fileHash;
+    let isBlockchainMatch = false;
+
+    if (prescription.blockchainId) {
+      try {
+        const record = await this.blockchainService.getRecordFromChain(prescription.blockchainId);
+        isBlockchainMatch = this.blockchainService.verifyDataHash(fileHash, record.dataHash);
+      } catch (error) {
+        console.error('Error verifying blockchain record:', error);
+      }
+    }
+
+    return {
+      isDbMatch,
+      isBlockchainMatch,
+      fileHash,
+      storedHash: prescription.fileHash,
+      blockchainTxHash: prescription.blockchainTxHash,
+      blockchainId: prescription.blockchainId,
+    };
+  }
   // ─── Dashboard ─────────────────────────────────────────
 
   async getDashboard(doctorId: number): Promise<DashboardResponseDTO> {
