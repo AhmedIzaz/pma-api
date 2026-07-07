@@ -55,6 +55,7 @@ export class GoogleDriveService {
         await this.drive.permissions.create({
           fileId: fileId,
           requestBody: { role: 'reader', type: 'anyone' },
+          supportsAllDrives: true,
         });
       } catch (permErr) {
         this.logger.warn(`Could not set public permissions for file ${fileId}`, permErr);
