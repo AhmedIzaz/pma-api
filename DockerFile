@@ -59,6 +59,9 @@ COPY package.json ./
 
 COPY tsconfig.json ./
 
+# Copy scripts folder from build stage
+COPY --from=build /app/scripts ./scripts
+
 RUN chown -R node:node /app
 
 # Use non-root user for security
