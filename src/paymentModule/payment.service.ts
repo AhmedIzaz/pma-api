@@ -213,16 +213,27 @@ export class PaymentService {
         if (parseFloat(data.amount) === parseFloat(payment.amount.toString()) && data.currency === payment.currency) {
           payment.status = TPaymentStatusEnum.SUCCESS;
           await this.paymentRepository.save(payment);
+          console.log({
+            paymentSuccess: true,
+            
+          })
           return true;
         } else {
           this.logger.error('Amount or currency mismatch during validation');
           payment.status = TPaymentStatusEnum.FAILED;
           await this.paymentRepository.save(payment);
+          console.log({
+            paymentFailed: true,
+            
+          })
           return false;
         }
       } else {
         payment.status = TPaymentStatusEnum.FAILED;
         await this.paymentRepository.save(payment);
+        console.log({
+          paymentFailed: true,
+        })
         return false;
       }
     } catch (error) {
