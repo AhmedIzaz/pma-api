@@ -90,7 +90,7 @@ export class SymptomAiService {
      */
     async getAiResponse(userPrompt: string): Promise<string> {
         const prompt = `
-        Medical Triage. Output JSON ONLY. No markdown. Input can be unclear, but try your best to match is input is critical or not, sometimes user cannot give proper proper medical terms or grammatical correct.
+        Medical Triage. Output JSON ONLY. No markdown.Do not use Markdown formatting or code blocks like \`\`\`json. Input can be unclear, but try your best to match is input is critical or not, sometimes user cannot give proper proper medical terms or grammatical correct.
         Medical input schema: {"triageLevel":"HIGH|MEDIUM|LOW","firstAid":"str","hospitalLookupNeeded":bool,"code":"CODE"}
         Non-medical/Unclear schema: {"message":"str"}
         Levels: HIGH(Critical), MEDIUM(Fever/Pain), LOW(Mild).
@@ -111,6 +111,8 @@ export class SymptomAiService {
                 body: JSON.stringify({
                     model: modelName,
                     messages: [{ role: 'user', content: prompt }],
+                    response_format: { type: 'json_object' },
+                    temperature: 0.2, // Lower temperature keeps output structure consistent
                 }),
             });
 
