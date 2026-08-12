@@ -336,6 +336,9 @@
           };
 
           mediaRecorder.start();
+          console.log({
+            mediaRecorder
+          })
           console.log("Audio recording started.");
         } catch (err) {
           console.error("Failed to start audio recording:", err);
@@ -343,6 +346,10 @@
       },
       onLeaveRoom: () => {
         // Stop recording when leaving the room
+        console.log({
+          mediaRecorder,
+          audioChunks
+        })
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
           mediaRecorder.onstop = async () => {
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // Web browsers typically record in webm or ogg
