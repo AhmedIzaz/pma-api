@@ -69,6 +69,12 @@ export class DoctorViewController {
     const appId = Buffer.from(base64AppId, 'base64').toString('utf-8')?.replace('\n', '');
     const serverSecret = Buffer.from(base64ServerSecret, 'base64').toString('utf-8')?.replace('\n', '');
 
+
+    console.log({
+      appId,
+      serverSecret,
+    })
+
     const doctorId = consultation?.doctorId;
     if (!doctorId) {
       throw new NotFoundException(`Doctor ID not found for consultation with ID ${consultationId}`);
