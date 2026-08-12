@@ -50,7 +50,17 @@ export class PaymentService {
   async initiatePayment(dto: InitiatePaymentDto) {
     const { amount, userId, consultationId } = dto;
 
+    console.log({
+      amount,
+      userId,
+      consultationId,
+    })
+
     const user = await this.userService.findUserById(userId);
+
+    console.log({
+      user,
+    })
 
     if (!user?.userId) {
       throw new NotFoundException('User not found');
@@ -58,12 +68,21 @@ export class PaymentService {
 
     const consultation = await this.doctorService.getConsultationById(consultationId);
 
+    console.log({
+      consultation,
+    })
+
     if (!consultation?.consultationId) {
       throw new NotFoundException('Consultation not found');
     }
 
     const tran_id = uuidv4();
     const currency = 'BDT';
+
+    console.log({
+      tran_id,
+      currency,
+    })
 
     const { store_id, store_passwd, baseUrl, domain } = this.getSslCredentials();
 
@@ -76,11 +95,20 @@ export class PaymentService {
       user_id: userId,
       consultationId,
     });
+
+    console.log({
+      payment,
+    })
     await this.paymentRepository.save(payment);
 
     // Prepare SSLCommerz Payload
     const protocol = domain.includes('localhost') ? 'http' : 'https';
     const apiBase = this.configService.get<string>('API_BASE') || '';
+
+    console.log({
+      protocol,
+      apiBase,
+    })
 
     // We use URLSearchParams because SSLCommerz expects application/x-www-form-urlencoded
     const payload = new URLSearchParams();
@@ -114,6 +142,10 @@ export class PaymentService {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
+
+      console.log({
+        response,
+      })
 
       if (response.data && response.data.status === 'SUCCESS') {
         return {
