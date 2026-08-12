@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PromptService } from './prompt.service';
 import { PromptController } from './prompt.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,7 +13,7 @@ import { SymptomAiService } from './symptom-ai.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([PromptEntity, FirstAidEntity]),
-    UserModule,
+    forwardRef(() => UserModule),
     FirstAidModule
   ],
   controllers: [PromptController],

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { DoctorEntity } from './doctor.entity';
@@ -30,7 +30,7 @@ import { PdfService } from './pdf.service';
     ]),
     ConfigModule,
     BlockchainModule,
-    PromptModule,
+    forwardRef(() => PromptModule),
   ],
   controllers: [DoctorController, DoctorViewController],
   providers: [

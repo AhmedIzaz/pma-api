@@ -1,9 +1,8 @@
 # ============================================
 # Stage 1: Install dependencies
 # ============================================
-FROM node:22-alpine AS deps
-# Install glibc dynamic linker compatibility
-RUN apk add --no-cache libc6-compat gcompat
+FROM node:22-slim AS deps
+
 
 WORKDIR /app
 
@@ -16,9 +15,8 @@ RUN yarn install --frozen-lockfile
 # ============================================
 # Stage 2: Build the application
 # ============================================
-FROM node:22-alpine AS build
-# Install glibc dynamic linker compatibility
-RUN apk add --no-cache libc6-compat gcompat
+FROM node:22-slim AS build
+
 
 WORKDIR /app
 
@@ -40,17 +38,15 @@ RUN yarn build
 # ============================================
 # Stage 3: Production image
 # ============================================
-FROM node:22-alpine AS production
-# Install glibc dynamic linker compatibility
-RUN apk add --no-cache libc6-compat gcompat
+FROM node:22-slim AS production
+
 
 # Add labels for better maintainability
 LABEL maintainer="pma-team"
 LABEL description="Personal Medical Assistant API"
 
-# Install wget for healthcheck (not included in alpine by default)
-RUN sed -i 's/dl-cdn.alpinelinux.org/uk.alpinelinux.org/g' /etc/apk/repositories && \
-    apk add --no-cache curl
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
