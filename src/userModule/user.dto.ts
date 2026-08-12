@@ -107,6 +107,13 @@ export class BookAppointmentDTO {
 export class UsersAppointmentListDTO {
   @Expose()
   consultationId: number;
+
+  @Expose()
+  startTime: string;
+
+  @Expose()
+  endTime: string;
+
   @Expose()
   @Type(() => DoctorBaseDTO)
   doctor: DoctorBaseDTO

@@ -213,11 +213,17 @@ export class DoctorService {
   }
 
   async createConsultation(doctorId: number, data: CreateConsultationDTO) {
+    let endTime:any = null;
+    if (data?.requestedDurationHours && data?.startTime) {
+      endTime = new Date(data.startTime);
+      endTime.setHours(endTime.getHours() + data?.requestedDurationHours);
+    }
     return this.consultationRepository.create({
       doctorId,
       serviceId: data.serviceId,
       userId: data.userId,
       startTime: new Date(data.startTime),
+      endTime: endTime,
       requestedDurationHours: data.requestedDurationHours,
       status: TConsultationStatusEnum.SCHEDULED,
     });
