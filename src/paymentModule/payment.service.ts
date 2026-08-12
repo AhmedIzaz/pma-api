@@ -209,7 +209,7 @@ export class PaymentService {
         payment?.id
       ) {
         // Validate amount and currency
-        if (parseFloat(data.amount) === parseFloat(payment.amount.toString()) && data.currency === payment.currency) {
+        if (parseFloat(payment?.amount.toString()) === parseFloat(payment.amount.toString()) && payment?.currency === payment?.currency) {
           payment.status = TPaymentStatusEnum.SUCCESS;
           await this.paymentRepository.save(payment);
           console.log({
