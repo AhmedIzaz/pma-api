@@ -68,9 +68,41 @@ export class DoctorController {
   @Post('/login')
   @ApiOperation({ summary: 'Login as doctor with email and password' })
   async login(
-    @Body() body: DoctorLoginDTO,
-  ): Promise<DoctorLoginResponseDTO> {
+    @Body() body: DoctorLoginDTO,){
     return this.doctorService.doctorLogin(body);
+  }
+
+  // ─── Protected Profile Routes ───────────────────────────
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.DOCTOR])
+  @Get('/profile')
+  @ApiOperation({ summary: 'Get doctor profile' })
+  async getProfile(@Req() req) {
+    return this.doctorService.getProfile(req.user.userId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.DOCTOR])
+  @Patch('/profile')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Update doctor profile and image' })
+  async updateProfile(
+    @Req() req,
+    @Body() body: any,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /^(image\/jpeg|image\/png)$/ }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    file?: Express.Multer.File,
+  ) {
+    return this.doctorService.updateProfile(req.user.userId, body, file);
   }
 
   // ─── Protected Service (pricing) Routes ─────────────────

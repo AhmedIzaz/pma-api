@@ -55,7 +55,15 @@ export class DoctorBaseDTO {
   @ApiPropertyOptional()
   @Expose()
   bio?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  @Expose()
+  doctorImageUrl?: string;
 }
+
+export class UpdateDoctorProfileDTO extends PartialType(DoctorBaseDTO) {}
 
 // ─── Registration ───────────────────────────────────────
 

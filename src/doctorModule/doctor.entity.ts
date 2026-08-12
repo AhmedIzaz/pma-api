@@ -30,6 +30,9 @@ export class DoctorEntity {
   @Column({ type: 'text', nullable: true })
   bio?: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  doctorImageUrl?: string;
+
   @Column(() => CommonDateEntity, { prefix: false })
   dateInfo: CommonDateEntity;
 

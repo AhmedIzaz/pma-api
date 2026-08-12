@@ -28,6 +28,7 @@ import {
   TActorTypeEnum,
   TConsultationStatusEnum,
 } from 'src/common/enums/database.enum';
+import { DoctorEntity } from './doctor.entity';
 
 @Injectable()
 export class DoctorService {
@@ -109,6 +110,40 @@ export class DoctorService {
       console.log('Error during doctorLogin: ', error);
       throw error;
     }
+  }
+
+  // ─── Profile ──────────────────────────────────────────
+
+  async getProfile(doctorId: number) {
+    const doctor = await this.doctorRepository.findById(doctorId);
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+    const { doctorPassword, ...profile } = doctor;
+    return profile;
+  }
+
+  async updateProfile(doctorId: number, data: Partial<DoctorEntity>, file?: Express.Multer.File) {
+    const doctor = await this.doctorRepository.findById(doctorId);
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    let doctorImageUrl = doctor.doctorImageUrl;
+    if (file) {
+      doctorImageUrl = await this.googleDriveService.uploadFile(file);
+    }
+
+    const updated = await this.doctorRepository.update(doctorId, {
+      ...data,
+      doctorImageUrl,
+    });
+
+    if (updated) {
+      const { doctorPassword, ...profile } = updated;
+      return profile;
+    }
+    return null;
   }
 
   // ─── Services (pricing) ────────────────────────────────

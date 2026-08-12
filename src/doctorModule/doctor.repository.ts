@@ -26,6 +26,12 @@ export class DoctorRepository {
     return repo.save(instance);
   }
 
+  async update(doctorId: number, data: Partial<DoctorEntity>, manager?: EntityManager) {
+    const repo = this.repository(manager);
+    await repo.update(doctorId, data);
+    return this.findById(doctorId, manager);
+  }
+
   async findAllDoctorsWithServices(manager?: EntityManager) {
     return this.repository(manager)?.find({
       relations: ['services'],
