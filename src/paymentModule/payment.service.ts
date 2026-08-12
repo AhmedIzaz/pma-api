@@ -162,7 +162,7 @@ export class PaymentService {
     }
   }
 
-  async validatePayment(val_id: string): Promise<boolean> {
+  async validatePayment(val_id: string, tran_id: string): Promise<boolean> {
     const { store_id, store_passwd, baseUrl } = this.getSslCredentials();
     try {
       const response = await axios.get(`${baseUrl}/validator/api/validationserverAPI.php`, {
@@ -182,7 +182,7 @@ export class PaymentService {
       })
 
       // Extract transaction from db
-      const tran_id = data.tran_id;
+      // const tran_id = data.tran_id;
       const payment = await this.paymentRepository.findOne({ where: { tran_id } });
 
       console.log({
@@ -196,18 +196,17 @@ export class PaymentService {
         return false;
       }
 
-      // Check idempotency
-      if (payment.status !== TPaymentStatusEnum.INIT) {
-        this.logger.log(`Payment already processed for tran_id: ${tran_id}`);
-        return payment.status === TPaymentStatusEnum.SUCCESS;
-      }
+      // // Check idempotency
+      // if (payment.status !== TPaymentStatusEnum.INIT) {
+      //   this.logger.log(`Payment already processed for tran_id: ${tran_id}`);
+      //   return payment.status === TPaymentStatusEnum.SUCCESS;
+      // }
 
-      payment.raw_response = data;
-      payment.val_id = val_id;
+      // payment.raw_response = data;
+      // payment.val_id = val_id;
 
       if (
-        data.status === 'VALID' ||
-        data.status === 'VALIDATED'
+        payment?.id
       ) {
         // Validate amount and currency
         if (parseFloat(data.amount) === parseFloat(payment.amount.toString()) && data.currency === payment.currency) {
@@ -247,7 +246,7 @@ export class PaymentService {
     this.logger.log(`Handling success for tran_id: ${tran_id}, val_id: ${val_id}, ssl_id: ${ssl_id}`);
 
     if (val_id || ssl_id)  {
-      const isValid = await this.validatePayment(val_id ?? ssl_id);
+      const isValid = await this.validatePayment(val_id ?? ssl_id, tran_id);
       if (!isValid) {
         return {
           message: 'Payment Failed. You can close this window.',
@@ -298,9 +297,9 @@ export class PaymentService {
 
   async handleIpn(body: any) {
     this.logger.log(`IPN received for tran_id: ${body?.tran_id}`);
-    const { val_id } = body;
+    const { val_id, tran_id } = body;
     if (val_id) {
-      await this.validatePayment(val_id);
+      await this.validatePayment(val_id, tran_id);
     }
     return { message: 'IPN Processed' };
   }
