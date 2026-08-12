@@ -352,7 +352,7 @@
             try {
               // Upload full conference audio to NestJS server
               // Adjust this endpoint if needed
-              await fetch(`/${apiBase}/consultation/upload-audio`, {
+              await fetch(`/${apiBase}/doctors/consultations/${roomId}/upload-audio`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}` // Assuming standard token based auth

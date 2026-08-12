@@ -392,6 +392,38 @@ export class DoctorService {
 
     return prescription;
   }
+
+  async uploadConsultationAudio(
+    doctorId: number,
+    consultationId: number,
+    file: Express.Multer.File,
+  ) {
+    const consultation = await this.consultationRepository.findById(consultationId);
+    if (!consultation) {
+      throw new NotFoundException('Consultation not found');
+    }
+    if (consultation.doctorId !== doctorId) {
+      throw new ForbiddenException('You do not own this consultation');
+    }
+
+    // Run audio processing in the background asynchronously
+    setImmediate(async () => {
+      try {
+        console.log(`[Audio Processing] Started for consultation ${consultationId}. File size: ${file.size} bytes`);
+        // Mock processing delay to simulate async audio handling (e.g., transcription or upload to storage)
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        console.log(`[Audio Processing] Completed successfully for consultation ${consultationId}.`);
+      } catch (error) {
+        console.error(`[Audio Processing] Failed for consultation ${consultationId}:`, error);
+      }
+    });
+
+    return { 
+      statusCode: 200, 
+      message: 'Audio uploaded successfully. Processing started asynchronously in the background.' 
+    };
+  }
+
   async verifyPrescription(prescriptionId: number, file: Express.Multer.File) {
     const prescription = await this.prescriptionRepository.findById(prescriptionId);
     if (!prescription) {

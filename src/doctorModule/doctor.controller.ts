@@ -280,6 +280,29 @@ export class DoctorController {
     return this.doctorService.uploadPrescription(req.user.userId, id, file);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.DOCTOR])
+  @Post('/consultations/:id/upload-audio')
+  @UseInterceptors(FileInterceptor('audio'))
+  @ApiOperation({ summary: 'Upload audio recording for a consultation' })
+  async uploadConsultationAudio(
+    @Req() req,
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 100 * 1024 * 1024 }), // 100MB
+          new FileTypeValidator({ fileType: /^(audio\/webm|audio\/ogg|audio\/mp4|audio\/mpeg|video\/webm)$/ }),
+        ],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.doctorService.uploadConsultationAudio(req.user.userId, id, file);
+  }
+
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
