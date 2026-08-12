@@ -315,13 +315,58 @@
 
     const zp = ZegoUIKitPrebuilt.create(kitToken);
 
+    let mediaRecorder;
+    let audioChunks = [];
+
     zp.joinRoom({
       container: document.getElementById("root"),
       scenario: {
         mode: ZegoUIKitPrebuilt.VideoConference,
       },
       showLeaveRoomConfirmDialog: false,
+      onJoinRoom: async () => {
+        try {
+          // Capture local audio track using standard Web API
+          // (ZegoUIKitPrebuilt doesn't easily expose the raw ZegoExpressEngine stream)
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) audioChunks.push(event.data);
+          };
+
+          mediaRecorder.start();
+          console.log("Audio recording started.");
+        } catch (err) {
+          console.error("Failed to start audio recording:", err);
+        }
+      },
       onLeaveRoom: () => {
+        // Stop recording when leaving the room
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // Web browsers typically record in webm or ogg
+            const formData = new FormData();
+            formData.append('audio', audioBlob, `consultation_${roomId}.webm`);
+
+            try {
+              // Upload full conference audio to NestJS server
+              // Adjust this endpoint if needed
+              await fetch(`/${apiBase}/consultation/upload-audio`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}` // Assuming standard token based auth
+                },
+                body: formData
+              });
+              console.log("Audio uploaded successfully.");
+            } catch (err) {
+              console.error('Audio upload failed', err);
+            }
+          };
+          mediaRecorder.stop();
+        }
+
         const leaveTime = new Date();
         const spentMinutes = Math.max(Math.round((leaveTime - joinTime) / 60000), 1);
 

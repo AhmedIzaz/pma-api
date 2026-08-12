@@ -149,6 +149,12 @@ export class PaymentService {
       const tran_id = data.tran_id;
       const payment = await this.paymentRepository.findOne({ where: { tran_id } });
 
+      console.log({
+        tran_id,
+        payment,
+        data
+      })
+
       if (!payment) {
         this.logger.warn(`Payment not found for tran_id: ${tran_id}`);
         return false;
@@ -194,7 +200,13 @@ export class PaymentService {
     this.logger.log(`Handling success for tran_id: ${tran_id}`);
 
     if (val_id) {
-      await this.validatePayment(val_id);
+      const isValid = await this.validatePayment(val_id);
+      if (!isValid) {
+        return {
+          message: 'Payment Failed. You can close this window.',
+          tran_id
+        };
+      }
     }
 
     return {
