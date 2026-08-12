@@ -66,8 +66,8 @@ export class DoctorViewController {
       throw new Error('ZIGO_APP_ID or ZIGO_SERVER_SECRET not configured');
     }
 
-    const appId = Buffer.from(base64AppId, 'base64').toString('utf-8');
-    const serverSecret = Buffer.from(base64ServerSecret, 'base64').toString('utf-8');
+    const appId = Buffer.from(base64AppId, 'base64').toString('utf-8')?.replace('\n', '');
+    const serverSecret = Buffer.from(base64ServerSecret, 'base64').toString('utf-8')?.replace('\n', '');
 
     const doctorId = consultation?.doctorId;
     if (!doctorId) {
