@@ -2,6 +2,8 @@
 # Stage 1: Install dependencies
 # ============================================
 FROM node:22-alpine AS deps
+# Install glibc dynamic linker compatibility
+RUN apk add --no-cache libc6-compat gcompat
 
 WORKDIR /app
 
@@ -15,6 +17,8 @@ RUN yarn install --frozen-lockfile
 # Stage 2: Build the application
 # ============================================
 FROM node:22-alpine AS build
+# Install glibc dynamic linker compatibility
+RUN apk add --no-cache libc6-compat gcompat
 
 WORKDIR /app
 
@@ -37,6 +41,8 @@ RUN yarn build
 # Stage 3: Production image
 # ============================================
 FROM node:22-alpine AS production
+# Install glibc dynamic linker compatibility
+RUN apk add --no-cache libc6-compat gcompat
 
 # Add labels for better maintainability
 LABEL maintainer="pma-team"
