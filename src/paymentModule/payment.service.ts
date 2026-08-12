@@ -23,8 +23,8 @@ export class PaymentService {
   ) { }
 
   private getSslCredentials() {
-    const storeIdBase64 = this.configService.get<string>('SSL_STORE_ID');
-    const storePassBase64 = this.configService.get<string>('SSL_STORE_NAME');
+    const storeIdBase64 = this.configService.get<string>('SSL_STORE_ID')?.trim();
+    const storePassBase64 = this.configService.get<string>('SSL_STORE_NAME')?.trim();
     const baseUrl = this.configService.get<string>('SSL_BASE_URL');
     let domain = this.configService.get<string>('DOMAIN');
 
@@ -32,8 +32,17 @@ export class PaymentService {
       domain = 'localhost:8000';
     }
 
-    const store_id = storeIdBase64 ? Buffer.from(storeIdBase64, 'base64').toString('utf-8') : '';
-    const store_passwd = storePassBase64 ? Buffer.from(storePassBase64, 'base64').toString('utf-8') : '';
+    const store_id = storeIdBase64 ? Buffer.from(storeIdBase64, 'base64').toString('utf-8')?.replace('\n', '') : '';
+    const store_passwd = storePassBase64 ? Buffer.from(storePassBase64, 'base64').toString('utf-8')?.replace('\n', '') : '';
+
+
+    console.log({
+      store_id,
+      store_passwd,
+      baseUrl,
+      domain,
+    })
+
 
     return { store_id, store_passwd, baseUrl, domain };
   }
