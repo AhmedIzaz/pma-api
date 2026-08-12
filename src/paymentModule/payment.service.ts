@@ -177,6 +177,10 @@ export class PaymentService {
 
       const data = response.data;
 
+      console.log({
+        data
+      })
+
       // Extract transaction from db
       const tran_id = data.tran_id;
       const payment = await this.paymentRepository.findOne({ where: { tran_id } });
