@@ -131,4 +131,43 @@ export class SymptomAiService {
             throw new BadGatewayException('Failed to get response from AI');
         }
     }
+
+    /**
+     * Sends user prompt to AI to get generic response (e.g. for consultation formatting).
+     */
+    async getGenericAiResponse(prompt: string): Promise<string> {
+        const apiKey = this.configService.get<string>('HCNSEC_API_KEY');
+        const baseUrl = this.configService.get<string>('HCNSEC_BASE_URL') || 'https://api.hcnsec.cn/v1';
+        const modelName = this.configService.get<string>('HCNSEC_MODEL') || 'auto';
+
+        try {
+            const response = await fetch(`${baseUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: modelName,
+                    messages: [{ role: 'user', content: prompt }],
+                    response_format: { type: 'json_object' },
+                    temperature: 0.2,
+                }),
+            });
+
+            console.log("Response from generic AI: ", response);
+
+            if (!response.ok) {
+                const body = await response.text();
+                this.logger.error(`AI returned ${response.status}: ${body}`);
+                throw new BadGatewayException('Failed to get generic response from AI');
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        } catch (error) {
+            this.logger.error('Error fetching generic from AI', error);
+            throw new BadGatewayException('Failed to get generic response from AI');
+        }
+    }
 }

@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@huggingface/transformers": "^4.2.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -44,13 +45,14 @@
     "hbs": "^4.2.1",
     "ioredis": "^5.10.1",
     "mysql2": "^3.15.2",
+    "pdfkit": "^0.19.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "0.3.20",
     "typeorm-cursor-pagination": "^0.10.1",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.0",
+    "wavefile": "^11.0.0"
   },
-
   "resolutions": {
     "string-width": "4.2.3",
     "strip-ansi": "6.0.1",

@@ -18,5 +18,6 @@ import { SymptomAiService } from './symptom-ai.service';
   ],
   controllers: [PromptController],
   providers: [PromptService, PromptRepository, SymptomAiService],
+  exports: [SymptomAiService],
 })
 export class PromptModule { }

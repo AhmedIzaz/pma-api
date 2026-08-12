@@ -196,11 +196,11 @@ export class PaymentService {
   }
 
   async handleSuccess(body: any) {
-    const { val_id, tran_id } = body;
-    this.logger.log(`Handling success for tran_id: ${tran_id}, val_id: ${val_id}`);
+    const { val_id, tran_id, ssl_id } = body;
+    this.logger.log(`Handling success for tran_id: ${tran_id}, val_id: ${val_id}, ssl_id: ${ssl_id}`);
 
     if (val_id) {
-      const isValid = await this.validatePayment(val_id);
+      const isValid = await this.validatePayment(val_id ?? ssl_id);
       if (!isValid) {
         return {
           message: 'Payment Failed. You can close this window.',

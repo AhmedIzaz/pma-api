@@ -11,6 +11,9 @@ import { ConsultationRepository } from './consultation.repository';
 import { PrescriptionRepository } from './prescription.repository';
 import { GoogleDriveService } from './google-drive.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
+import { TranscriptionService } from './transcribe.service';
+import { ConsultationFormatterService } from './consultationFormatter.service';
+import { PdfService } from './pdf.service';
 import * as crypto from 'crypto';
 import {
   CompleteConsultationDTO,
@@ -40,6 +43,9 @@ export class DoctorService {
     private readonly googleDriveService: GoogleDriveService,
     private readonly blockchainService: BlockchainService,
     private readonly jwtService: JwtService,
+    private readonly transcriptionService: TranscriptionService,
+    private readonly consultationFormatterService: ConsultationFormatterService,
+    private readonly pdfService: PdfService,
   ) { }
 
   // ─── Auth ───────────────────────────────────────────────
@@ -410,8 +416,34 @@ export class DoctorService {
     setImmediate(async () => {
       try {
         console.log(`[Audio Processing] Started for consultation ${consultationId}. File size: ${file.size} bytes`);
-        // Mock processing delay to simulate async audio handling (e.g., transcription or upload to storage)
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        // 1. Transcribe audio
+        console.log(`[Audio Processing] Step 1: Transcribing audio...`);
+        const transcript = await this.transcriptionService.transcribe(file.buffer);
+        console.log(`[Audio Processing] Step 1 completed. Transcript length: ${transcript?.length || 0}`);
+
+        // 2. Format transcript using AI
+        console.log(`[Audio Processing] Step 2: Formatting transcript with AI...`);
+        const formattedData = await this.consultationFormatterService.formatTranscriptToDraft(transcript);
+        console.log(`[Audio Processing] Step 2 completed.`);
+
+        // 3. Generate PDF
+        console.log(`[Audio Processing] Step 3: Generating PDF...`);
+        const pdfBuffer = await this.pdfService.generateConsultationPdf(formattedData, consultationId.toString());
+        console.log(`[Audio Processing] Step 3 completed. PDF size: ${pdfBuffer.length} bytes`);
+
+        // 4. Upload PDF to Google Drive
+        console.log(`[Audio Processing] Step 4: Uploading PDF to Google Drive...`);
+        const pdfFile = {
+          originalname: `consultation_${consultationId}.pdf`,
+          mimetype: 'application/pdf',
+          buffer: pdfBuffer,
+          size: pdfBuffer.length,
+        } as Express.Multer.File;
+        
+        const pdfDriveUrl = await this.googleDriveService.uploadFile(pdfFile);
+        console.log(`[Audio Processing] Step 4 completed. Drive URL: ${pdfDriveUrl}`);
+
         console.log(`[Audio Processing] Completed successfully for consultation ${consultationId}.`);
       } catch (error) {
         console.error(`[Audio Processing] Failed for consultation ${consultationId}:`, error);
