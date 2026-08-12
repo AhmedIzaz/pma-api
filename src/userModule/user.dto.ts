@@ -166,3 +166,26 @@ export class VerifyPrescriptionResponseDTO {
   @ApiPropertyOptional({ description: 'The blockchain record ID, if available' })
   blockchainId?: number;
 }
+
+@Exclude()
+export class UserConferenceResponseDTO {
+  @Expose()
+  @ApiProperty()
+  appId: string;
+
+  @Expose()
+  @ApiProperty()
+  serverSecret: string;
+
+  @Expose()
+  @ApiProperty()
+  consultationId: string;
+
+  @Expose()
+  @ApiProperty()
+  userId: number;
+
+  @Expose()
+  @ApiProperty()
+  userName: string;
+}

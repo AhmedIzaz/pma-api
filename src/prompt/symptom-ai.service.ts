@@ -28,11 +28,12 @@ export class SymptomAiService {
     private readonly baseUrl: string;
 
     private genAI: GoogleGenerativeAI;
+    
 
     constructor(private readonly configService: ConfigService) {
         // Falls back to localhost if SYMPTOM_AI_URL is not set
         this.baseUrl = this.configService.get<string>('SYMPTOM_AI_URL') ?? 'http://localhost:8080';
-        const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+        const apiKey = this.configService.get<string>('GEMINI_AI_KEY');
         if (apiKey) {
             this.genAI = new GoogleGenerativeAI(apiKey);
         }
@@ -84,6 +85,9 @@ export class SymptomAiService {
     }
 
 
+    /**
+     * Sends user prompt to AI to get triage response.
+     */
     async getAiResponse(userPrompt: string): Promise<string> {
         const prompt = `
         Medical Triage. Output JSON ONLY. No markdown. Input can be unclear, but try your best to match is input is critical or not, sometimes user cannot give proper proper medical terms or grammatical correct.
@@ -92,11 +96,37 @@ export class SymptomAiService {
         Levels: HIGH(Critical), MEDIUM(Fever/Pain), LOW(Mild).
         Input: "${userPrompt}"
         `;
-        // Access the model (e.g., gemini-1.5-flash for speed or gemini-1.5-pro for complex tasks)
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        
+        const apiKey = this.configService.get<string>('HCNSEC_API_KEY');
+        const baseUrl = this.configService.get<string>('HCNSEC_BASE_URL') || 'https://api.hcnsec.cn/v1';
+        const modelName = this.configService.get<string>('HCNSEC_MODEL') || 'auto';
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        try {
+            const response = await fetch(`${baseUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: modelName,
+                    messages: [{ role: 'user', content: prompt }],
+                }),
+            });
+
+            // console.log("Response from AI: ", response);
+
+            if (!response.ok) {
+                const body = await response.text();
+                this.logger.error(`AI returned ${response.status}: ${body}`);
+                throw new BadGatewayException('Failed to get response from AI');
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        } catch (error) {
+            this.logger.error('Error fetching from AI', error);
+            throw new BadGatewayException('Failed to get response from AI');
+        }
     }
 }

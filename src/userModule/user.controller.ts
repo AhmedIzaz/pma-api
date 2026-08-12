@@ -11,7 +11,10 @@ import {
   Param,
   UploadedFile,
   BadRequestException,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   GoogleOAuthDTO,
@@ -23,6 +26,7 @@ import {
   UsersAppointmentListDTO,
   PrescriptionResponseDTO,
   VerifyPrescriptionResponseDTO,
+  UserConferenceResponseDTO,
 } from './user.dto';
 import { UserService } from './user.service';
 import { DoctorService } from 'src/doctorModule/doctor.service';
@@ -38,6 +42,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly doctorService: DoctorService,
+    private readonly configService: ConfigService,
   ) { }
 
   @Get('/hello')
@@ -157,5 +162,44 @@ export class UserController {
       throw new BadRequestException('File is required for verification');
     }
     return this.doctorService.verifyPrescription(Number(id), file);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Get('/consultations/:id/conference')
+  @ApiOperation({ summary: 'Get conference credentials for a specific consultation' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: UserConferenceResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  async getConferenceCredentials(@Req() req, @Param('id') id: string) {
+    const consultation = await this.doctorService.getConsultationById(Number(id));
+    if (!consultation) {
+      throw new NotFoundException(`Consultation with ID ${id} not found`);
+    }
+
+    if (consultation.userId !== req.user.userId) {
+      throw new ForbiddenException('You do not have access to this consultation');
+    }
+
+    const base64AppId = this.configService.get<string>('ZIGO_APP_ID');
+    const base64ServerSecret = this.configService.get<string>('ZIGO_SERVER_SECRET');
+
+    if (!base64AppId || !base64ServerSecret) {
+      throw new Error('ZIGO_APP_ID or ZIGO_SERVER_SECRET not configured');
+    }
+
+    const appId = Buffer.from(base64AppId, 'base64').toString('utf-8');
+    const serverSecret = Buffer.from(base64ServerSecret, 'base64').toString('utf-8');
+
+    return {
+      appId,
+      serverSecret,
+      consultationId: id,
+      userId: req.user.userId,
+      userName: req.user.userName,
+    };
   }
 }
