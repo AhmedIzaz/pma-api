@@ -114,7 +114,7 @@ export class SymptomAiService {
                 }),
             });
 
-            // console.log("Response from AI: ", response);
+            console.log("Response from AI: ", response);
 
             if (!response.ok) {
                 const body = await response.text();
