@@ -8,6 +8,8 @@ import { PaymentEntity, TPaymentStatusEnum } from './payment.entity';
 import { InitiatePaymentDto } from './payment.dto';
 import { UserService } from 'src/userModule/user.service';
 import { DoctorService } from 'src/doctorModule/doctor.service';
+import { ConsultationEntity } from 'src/doctorModule/consultation.entity';
+import { TConsultationStatusEnum } from 'src/common/enums/database.enum';
 
 @Injectable()
 export class PaymentService {
@@ -19,6 +21,8 @@ export class PaymentService {
     private readonly configService: ConfigService,
     private readonly userService: UserService,
     private readonly doctorService: DoctorService,
+    @InjectRepository(ConsultationEntity)
+    private readonly consultationRepository: Repository<ConsultationEntity>,
 
   ) { }
 
@@ -206,15 +210,16 @@ export class PaymentService {
       // payment.val_id = val_id;
 
       if (
-        payment?.id
+        payment?.id && payment?.consultationId && payment?.amount
       ) {
         // Validate amount and currency
         if (parseFloat(payment?.amount.toString()) === parseFloat(payment.amount.toString()) && payment?.currency === payment?.currency) {
           payment.status = TPaymentStatusEnum.SUCCESS;
           await this.paymentRepository.save(payment);
+          await this.consultationRepository.update(payment?.consultationId, { status: TConsultationStatusEnum.COMPLETED, amountEarned: payment?.amount, });
           console.log({
             paymentSuccess: true,
-            
+
           })
           return true;
         } else {
