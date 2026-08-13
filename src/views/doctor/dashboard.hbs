@@ -201,6 +201,19 @@
       const profileAvatar  = document.getElementById('profile-avatar');
 
       /** Fetch and display the doctor's profile data */
+       function toDriveDirectUrl(url) {
+  if (!url) return '';
+  
+  // Extract File ID from drive.google.com/uc?export=view&id=FILE_ID or drive.google.com/file/d/FILE_ID
+  const match = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    const fileId = match[1];
+    // Use Google's CDN endpoint which allows cross-origin img embedding
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+  
+  return url;
+}
       function fetchProfile() {
         fetch('/{{apiBase}}/doctors/profile', {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -210,8 +223,9 @@
           if (data && !data.statusCode) {
             popupName.textContent  = data.doctorName  || 'Doctor';
             popupEmail.textContent = data.doctorEmail || '';
-            profileAvatar.src = data.doctorImageUrl
-              ? data.doctorImageUrl
+             const directImageUrl = toDriveDirectUrl(data.doctorImageUrl);
+            profileAvatar.src = directImageUrl
+              ? directImageUrl
               : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.doctorName || 'Doctor')}&background=random`;
             document.getElementById('edit-name').value           = data.doctorName      || '';
             document.getElementById('edit-specialization').value = data.specialization  || '';
