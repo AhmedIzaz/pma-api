@@ -163,6 +163,19 @@
         </div>
         <div class="p-6 flex-1 overflow-y-auto space-y-6">
           
+          <!-- AI Generated Diagnosis Report -->
+          <div class="bg-white/5 rounded-xl p-4 border border-white/10" id="aiReportSection">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-medium text-slate-300">AI Generated Diagnosis Report</h4>
+              <button type="button" id="syncAiReportBtn" class="px-2 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium transition flex items-center gap-1" title="Sync AI Report">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Sync
+              </button>
+            </div>
+            <div id="aiReportContent" class="text-sm text-slate-400">
+              Loading...
+            </div>
+          </div>
+
           <!-- Upload Form -->
           <div class="bg-white/5 rounded-xl p-4 border border-white/10">
             <h4 class="text-sm font-medium text-slate-300 mb-3">Upload New Prescription</h4>
@@ -284,6 +297,24 @@
       const popupEmail     = document.getElementById('popup-email');
       const profileAvatar  = document.getElementById('profile-avatar');
 
+      /**
+       * Convert any Google Drive URL variant to a direct embeddable image URL.
+       * Handles both legacy viewer URLs (/file/d/ID/view) and already-converted uc URLs.
+       */
+     function toDriveDirectUrl(url) {
+  if (!url) return '';
+  
+  // Extract File ID from drive.google.com/uc?export=view&id=FILE_ID or drive.google.com/file/d/FILE_ID
+  const match = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    const fileId = match[1];
+    // Use Google's CDN endpoint which allows cross-origin img embedding
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+  
+  return url;
+}
+
       /** Fetch and display the doctor's profile data */
       function fetchProfile() {
         fetch('/{{apiBase}}/doctors/profile', {
@@ -294,8 +325,9 @@
           if (data && !data.statusCode) {
             popupName.textContent  = data.doctorName  || 'Doctor';
             popupEmail.textContent = data.doctorEmail || '';
-            profileAvatar.src = data.doctorImageUrl
-              ? data.doctorImageUrl
+            const directImageUrl = toDriveDirectUrl(data.doctorImageUrl);
+            profileAvatar.src = directImageUrl
+              ? directImageUrl
               : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.doctorName || 'Doctor')}&background=random`;
             document.getElementById('edit-name').value           = data.doctorName      || '';
             document.getElementById('edit-specialization').value = data.specialization  || '';
@@ -497,13 +529,68 @@
       modal.classList.add('hidden');
     };
 
+    const fetchConsultationDetails = async (id) => {
+      const btn = document.getElementById('syncAiReportBtn');
+      const icon = btn.querySelector('i');
+      if (icon) icon.classList.add('animate-spin');
+      
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultation/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch consultation details');
+        const data = await res.json();
+        
+        const contentDiv = document.getElementById('aiReportContent');
+        if (data.aiGeneratedDiagnosisReportSource) {
+          const match = data.aiGeneratedDiagnosisReportSource.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          const downloadUrl = match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : data.aiGeneratedDiagnosisReportSource;
+          
+          contentDiv.innerHTML = `
+            <div class="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-white">Diagnosis Report.pdf</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <a href="${data.aiGeneratedDiagnosisReportSource}" target="_blank" class="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium transition flex items-center gap-1" title="Preview Document">
+                  <i data-lucide="eye" class="w-4 h-4"></i> Preview
+                </a>
+                <a href="${downloadUrl}" target="_blank" download class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-medium transition flex items-center gap-1" title="Download Document">
+                  <i data-lucide="download" class="w-4 h-4"></i> Download
+                </a>
+              </div>
+            </div>
+          `;
+        } else {
+          contentDiv.innerHTML = '<div class="text-sm text-slate-500">AI Report is currently generating or not available yet.</div>';
+        }
+        lucide.createIcons();
+      } catch (err) {
+        document.getElementById('aiReportContent').innerHTML = `<div class="text-sm text-red-400">${err.message}</div>`;
+      } finally {
+        if (icon) icon.classList.remove('animate-spin');
+      }
+    };
+
+    document.getElementById('syncAiReportBtn').addEventListener('click', () => {
+      const id = document.getElementById('prescriptionConsultationId').value;
+      if (id) fetchConsultationDetails(id);
+    });
+
     window.openPrescriptionModal = (id) => {
       document.getElementById('prescriptionForm').reset();
       document.getElementById('prescriptionConsultationId').value = id;
       document.getElementById('prescriptionList').innerHTML = '<div class="text-sm text-slate-500 text-center py-4">Loading...</div>';
       document.getElementById('prescriptionCount').innerText = '...';
+      document.getElementById('aiReportContent').innerHTML = 'Loading...';
       prescriptionModal.classList.remove('hidden');
       fetchPrescriptions(id);
+      fetchConsultationDetails(id);
     };
 
     window.closePrescriptionModal = () => {

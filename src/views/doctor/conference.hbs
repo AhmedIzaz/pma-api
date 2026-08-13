@@ -329,7 +329,9 @@
           // Capture local audio track using standard Web API
           // (ZegoUIKitPrebuilt doesn't easily expose the raw ZegoExpressEngine stream)
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder = new MediaRecorder(stream, {
+           mimeType:"audio/webm" 
+          });
           
           mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) audioChunks.push(event.data);

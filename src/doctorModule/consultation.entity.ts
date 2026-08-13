@@ -1,10 +1,10 @@
 import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  OneToOne,
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    OneToOne,
 } from 'typeorm';
 import { CommonDateEntity } from 'src/common/entities/date.entity';
 import { DoctorEntity } from './doctor.entity';
@@ -15,64 +15,67 @@ import { PaymentEntity } from 'src/paymentModule/payment.entity';
 
 @Entity('consultations')
 export class ConsultationEntity {
-  @PrimaryGeneratedColumn()
-  consultationId: number;
+    @PrimaryGeneratedColumn()
+    consultationId: number;
 
-  @ManyToOne(() => DoctorEntity, (doctor) => doctor.consultations, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'doctorId' })
-  doctor: DoctorEntity;
+    @ManyToOne(() => DoctorEntity, (doctor) => doctor.consultations, {
+        onDelete: 'CASCADE',
+    })
+    @JoinColumn({ name: 'doctorId' })
+    doctor: DoctorEntity;
 
-  @Column()
-  doctorId: number;
+    @Column()
+    doctorId: number;
 
-  @ManyToOne(() => UserEntity, undefined, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'userId' })
-  user: UserEntity;
+    @ManyToOne(() => UserEntity, undefined, { onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'userId' })
+    user: UserEntity;
 
-  @Column({ type: 'int', nullable: true })
-  userId?: number;
+    @Column({ type: 'int', nullable: true })
+    userId?: number;
 
-  @ManyToOne(() => DoctorServiceEntity, undefined, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'serviceId' })
-  service: DoctorServiceEntity;
+    @ManyToOne(() => DoctorServiceEntity, undefined, { onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'serviceId' })
+    service: DoctorServiceEntity;
 
-  @Column({ type: 'int', nullable: true })
-  serviceId?: number;
+    @Column({ type: 'int', nullable: true })
+    serviceId?: number;
 
-  @Column({ type: 'timestamp' })
-  startTime: Date;
+    @Column({ type: 'timestamp' })
+    startTime: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
-  endTime?: Date;
+    @Column({ type: 'timestamp', nullable: true })
+    endTime?: Date;
 
-  @Column({ type: 'int', default: 0 })
-  durationMinutes: number;
+    @Column({ type: 'int', default: 0 })
+    durationMinutes: number;
 
-  @Column({ type: 'int', nullable: true })
-  requestedDurationHours?: number;
+    @Column({ type: 'int', nullable: true })
+    requestedDurationHours?: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  amountEarned: number;
+    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    amountEarned: number;
 
-  @Column({
-    type: 'enum',
-    enum: TConsultationStatusEnum,
-    default: TConsultationStatusEnum.SCHEDULED,
-  })
-  status: TConsultationStatusEnum;
+    @Column({
+        type: 'enum',
+        enum: TConsultationStatusEnum,
+        default: TConsultationStatusEnum.SCHEDULED,
+    })
+    status: TConsultationStatusEnum;
 
-  @Column(() => CommonDateEntity, { prefix: false })
-  dateInfo: CommonDateEntity;
+    @Column(() => CommonDateEntity, { prefix: false })
+    dateInfo: CommonDateEntity;
 
-  @OneToOne(() => PaymentEntity, (payment) => payment.consultation, {
-    nullable: true,
-    onDelete: 'SET NULL',
-  })
-  payment?: PaymentEntity;
+    @OneToOne(() => PaymentEntity, (payment) => payment.consultation, {
+        nullable: true,
+        onDelete: 'SET NULL',
+    })
+    payment?: PaymentEntity;
 
-  // diagnosis -> text field, doctor will save the diagnosis related info. // this field would be use to verify using blockchain.
-  @Column({ type: 'text', nullable: true })
-  diagnosis?: string;
+    // diagnosis -> text field, doctor will save the diagnosis related info. // this field would be use to verify using blockchain.
+    @Column({ type: 'text', nullable: true })
+    diagnosis?: string;
+
+    @Column({ type: 'text', nullable: true })
+    aiGeneratedDiagnosisReportSource?: string;
 }

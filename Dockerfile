@@ -3,13 +3,12 @@
 # ============================================
 FROM node:22-slim AS deps
 
-
 WORKDIR /app
 
 # Copy only dependency manifests for optimal layer caching
 COPY package.json yarn.lock ./
 
-# Install all dependencies (including devDependencies for build)
+# Install all dependencies
 RUN yarn install --frozen-lockfile
 
 # ============================================
@@ -17,14 +16,13 @@ RUN yarn install --frozen-lockfile
 # ============================================
 FROM node:22-slim AS build
 
-
 WORKDIR /app
 
 # Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copy source code and config files
-COPY package.json yarn.lock tsconfig.json tsconfig.build.json nest-cli.json  ./
+COPY package.json yarn.lock tsconfig.json tsconfig.build.json nest-cli.json ./
 COPY src ./src
 COPY database ./database
 COPY scripts ./scripts
@@ -32,21 +30,19 @@ COPY scripts ./scripts
 # Build the NestJS application
 RUN yarn build
 
-# Prune devDependencies after build
-# RUN yarn install --frozen-lockfile --production && yarn cache clean
-
 # ============================================
 # Stage 3: Production image
 # ============================================
 FROM node:22-slim AS production
 
-
 # Add labels for better maintainability
 LABEL maintainer="pma-team"
 LABEL description="Personal Medical Assistant API"
 
-# Install curl for healthcheck
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+# Install curl (for healthcheck) and ffmpeg (for audio processing)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -74,7 +70,7 @@ EXPOSE 9000
 
 # Healthcheck to verify the app is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl-f http://localhost:9000 || exit 1
+  CMD curl -f http://localhost:9000 || exit 1
 
 # Start the application
 CMD ["node", "dist/src/main"]
