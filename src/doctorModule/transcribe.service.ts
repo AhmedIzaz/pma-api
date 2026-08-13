@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { pipeline } from '@huggingface/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 import * as wavefile from 'wavefile';
 import ffmpeg from 'fluent-ffmpeg';
 import * as ffmpegStatic from 'ffmpeg-static';
@@ -19,6 +19,10 @@ export class TranscriptionService {
 
     private async loadModel() {
         try {
+            // Point to the pre-downloaded model cache baked into the Docker image.
+            // Prevents any outbound network calls to HuggingFace CDN at runtime.
+            env.cacheDir = '/app/.cache';
+
             this.logger.log('Loading Whisper Speech Recognition model...');
             this.transcriber = await pipeline(
                 'automatic-speech-recognition',

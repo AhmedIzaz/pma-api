@@ -30,6 +30,9 @@ COPY scripts ./scripts
 # Build the NestJS application
 RUN yarn build
 
+# Pre-download the Whisper model into /app/.cache so no network call is needed at runtime
+RUN node scripts/download_model.mjs
+
 # ============================================
 # Stage 3: Production image
 # ============================================
@@ -59,6 +62,9 @@ COPY tsconfig.json ./
 
 # Copy scripts folder from build stage
 COPY --from=build /app/scripts ./scripts
+
+# Copy pre-downloaded Whisper model cache from build stage
+COPY --from=build /app/.cache ./.cache
 
 RUN chown -R node:node /app
 
