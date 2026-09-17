@@ -21,30 +21,41 @@ import { ConsultationFormatterService } from './consultationFormatter.service';
 import { PdfService } from './pdf.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      DoctorEntity,
-      DoctorServiceEntity,
-      ConsultationEntity,
-      PrescriptionEntity,
-    ]),
-    ConfigModule,
-    BlockchainModule,
-    forwardRef(() => PromptModule),
-  ],
-  controllers: [DoctorController, DoctorViewController],
-  providers: [
-    DoctorService,
-    DoctorRepository,
-    DoctorServiceRepository,
-    ConsultationRepository,
-    PrescriptionRepository,
-    GoogleDriveService,
-    BlockchainService,
-    TranscriptionService,
-    ConsultationFormatterService,
-    PdfService,
-  ],
-  exports: [TypeOrmModule, DoctorService, DoctorRepository, ConsultationRepository, PrescriptionRepository, GoogleDriveService, BlockchainService, TranscriptionService, ConsultationFormatterService, PdfService],
+    imports: [
+        TypeOrmModule.forFeature([
+            DoctorEntity,
+            DoctorServiceEntity,
+            ConsultationEntity,
+            PrescriptionEntity,
+        ]),
+        ConfigModule,
+        BlockchainModule,
+        forwardRef(() => PromptModule),
+    ],
+    controllers: [DoctorController, DoctorViewController],
+    providers: [
+        DoctorService,
+        DoctorRepository,
+        DoctorServiceRepository,
+        ConsultationRepository,
+        PrescriptionRepository,
+        GoogleDriveService,
+        BlockchainService,
+        TranscriptionService,
+        ConsultationFormatterService,
+        PdfService,
+    ],
+    exports: [
+        TypeOrmModule,
+        DoctorService,
+        DoctorRepository,
+        ConsultationRepository,
+        PrescriptionRepository,
+        GoogleDriveService,
+        BlockchainService,
+        TranscriptionService,
+        ConsultationFormatterService,
+        PdfService,
+    ],
 })
-export class DoctorModule { }
+export class DoctorModule {}

@@ -1,220 +1,269 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
 import {
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Length,
+    IsEmail,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Length,
 } from 'class-validator';
-import { DoctorBaseDTO, DoctorServiceResponseDTO } from 'src/doctorModule/doctor.dto';
+import {
+    DoctorBaseDTO,
+    DoctorServiceResponseDTO,
+} from 'src/doctorModule/doctor.dto';
 import { CommonDateEntity } from 'src/common/entities/date.entity';
 class UserBaseDTO {
-  @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty()
-  @Expose()
-  userId: number;
+    @IsNumber()
+    @IsNotEmpty()
+    @ApiProperty()
+    @Expose()
+    userId: number;
 
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty()
-  @Expose()
-  userName: string;
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty()
+    @Expose()
+    userName: string;
 
-  @IsEmail()
-  @ApiProperty()
-  @Expose()
-  userEmail?: string;
+    @IsEmail()
+    @ApiProperty()
+    @Expose()
+    userEmail?: string;
 }
 
 export class UserRegistrationDTO {
-  @IsString()
-  @Length(4, 50)
-  @IsNotEmpty()
-  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true })
-  userName: string;
+    @IsString()
+    @Length(4, 50)
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        minLength: 4,
+        maxLength: 50,
+        required: true,
+    })
+    userName: string;
 
-  @IsEmail()
-  @IsNotEmpty()
-  @ApiProperty({ type: 'string', required: true })
-  userEmail: string;
+    @IsEmail()
+    @IsNotEmpty()
+    @ApiProperty({ type: 'string', required: true })
+    userEmail: string;
 
-  @IsString()
-  @Length(4, 50)
-  @IsNotEmpty()
-  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true })
-  userPassword: string;
+    @IsString()
+    @Length(4, 50)
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        minLength: 4,
+        maxLength: 50,
+        required: true,
+    })
+    userPassword: string;
 }
 
-export class UserRegistrationResponseDTO extends UserBaseDTO { }
+export class UserRegistrationResponseDTO extends UserBaseDTO {}
 
 export class UserLoginDTO {
-  @IsEmail()
-  @IsNotEmpty()
-  @ApiProperty({ type: 'string', required: true, example: 'ahmedizazbhuiyan@gmail.com' })
-  userEmail: string;
+    @IsEmail()
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        required: true,
+        example: 'ahmedizazbhuiyan@gmail.com',
+    })
+    userEmail: string;
 
-  @IsString()
-  @Length(4, 50)
-  @IsNotEmpty()
-  @ApiProperty({ type: 'string', minLength: 4, maxLength: 50, required: true, example: "ahmedizazbhuiyan@gmail.com" })
-  userPassword?: string;
+    @IsString()
+    @Length(4, 50)
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        minLength: 4,
+        maxLength: 50,
+        required: true,
+        example: 'ahmedizazbhuiyan@gmail.com',
+    })
+    userPassword?: string;
 }
 
 export class UserLoginResponseDTO {
+    @Expose()
+    @Type(() => UserBaseDTO)
+    user: UserBaseDTO;
 
-  @Expose()
-  @Type(() => UserBaseDTO)
-  user: UserBaseDTO
-
-  @Expose()
-  @IsString()
-  accessToken: string;
+    @Expose()
+    @IsString()
+    accessToken: string;
 }
 
 export class GoogleOAuthDTO {
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ type: 'string', required: true, description: 'Google ID token from mobile SDK' })
-  idToken: string;
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        required: true,
+        description: 'Google ID token from mobile SDK',
+    })
+    idToken: string;
 }
 
 export class BookAppointmentDTO {
-  @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty({ type: 'number', description: 'ID of the doctor to book with' })
-  doctorId: number;
+    @IsNumber()
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'number',
+        description: 'ID of the doctor to book with',
+    })
+    doctorId: number;
 
-  @IsNumber()
-  @IsOptional()
-  @ApiPropertyOptional({ type: 'number', description: 'ID of the service selected' })
-  serviceId?: number;
+    @IsNumber()
+    @IsOptional()
+    @ApiPropertyOptional({
+        type: 'number',
+        description: 'ID of the service selected',
+    })
+    serviceId?: number;
 
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ type: 'string', description: 'Start time in ISO format', example: '2026-05-02T10:00:00Z' })
-  startTime: string;
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        description: 'Start time in ISO format',
+        example: '2026-05-02T10:00:00Z',
+    })
+    startTime: string;
 
-  @IsNumber()
-  @IsOptional()
-  @ApiPropertyOptional({ type: 'number', description: 'Requested duration in hours (e.g., 1 or 2)', example: 1 })
-  requestedDurationHours?: number;
+    @IsNumber()
+    @IsOptional()
+    @ApiPropertyOptional({
+        type: 'number',
+        description: 'Requested duration in hours (e.g., 1 or 2)',
+        example: 1,
+    })
+    requestedDurationHours?: number;
 }
 
 @Exclude()
 export class UsersAppointmentListDTO {
-  @Expose()
-  consultationId: number;
+    @Expose()
+    consultationId: number;
 
-  @Expose()
-  startTime: string;
+    @Expose()
+    startTime: string;
 
-  @Expose()
-  endTime: string;
+    @Expose()
+    endTime: string;
 
-  @Expose()
-  @Type(() => DoctorBaseDTO)
-  doctor: DoctorBaseDTO
+    @Expose()
+    @Type(() => DoctorBaseDTO)
+    doctor: DoctorBaseDTO;
 
-
-  @Expose()
-  @Type(() => DoctorServiceResponseDTO)
-  service: DoctorServiceResponseDTO
+    @Expose()
+    @Type(() => DoctorServiceResponseDTO)
+    service: DoctorServiceResponseDTO;
 }
 
 @Exclude()
 export class PrescriptionResponseDTO {
-  @Expose()
-  @ApiProperty()
-  prescriptionId: number;
+    @Expose()
+    @ApiProperty()
+    prescriptionId: number;
 
-  @Expose()
-  @ApiProperty()
-  consultationId: number;
+    @Expose()
+    @ApiProperty()
+    consultationId: number;
 
-  @Expose()
-  @ApiProperty()
-  fileRef: string;
+    @Expose()
+    @ApiProperty()
+    fileRef: string;
 
-  @Expose()
-  @ApiProperty()
-  fileName: string;
+    @Expose()
+    @ApiProperty()
+    fileName: string;
 
-  @Expose()
-  @ApiProperty()
-  dateInfo: CommonDateEntity;
+    @Expose()
+    @ApiProperty()
+    dateInfo: CommonDateEntity;
 }
 
 @Exclude()
 export class VerifyPrescriptionResponseDTO {
-  @Expose()
-  @ApiProperty({ description: 'Indicates if the file hash matches the hash stored in the database' })
-  isDbMatch: boolean;
+    @Expose()
+    @ApiProperty({
+        description:
+            'Indicates if the file hash matches the hash stored in the database',
+    })
+    isDbMatch: boolean;
 
-  @Expose()
-  @ApiProperty({ description: 'Indicates if the file hash matches the hash stored in the blockchain' })
-  isBlockchainMatch: boolean;
+    @Expose()
+    @ApiProperty({
+        description:
+            'Indicates if the file hash matches the hash stored in the blockchain',
+    })
+    isBlockchainMatch: boolean;
 
-  @Expose()
-  @ApiProperty({ description: 'The SHA256 hash of the provided file' })
-  fileHash: string;
+    @Expose()
+    @ApiProperty({ description: 'The SHA256 hash of the provided file' })
+    fileHash: string;
 
-  @Expose()
-  @ApiProperty({ description: 'The SHA256 hash stored in the database' })
-  storedHash: string;
+    @Expose()
+    @ApiProperty({ description: 'The SHA256 hash stored in the database' })
+    storedHash: string;
 
-  @Expose()
-  @ApiPropertyOptional({ description: 'The blockchain transaction hash, if available' })
-  blockchainTxHash?: string;
+    @Expose()
+    @ApiPropertyOptional({
+        description: 'The blockchain transaction hash, if available',
+    })
+    blockchainTxHash?: string;
 
-  @Expose()
-  @ApiPropertyOptional({ description: 'The blockchain record ID, if available' })
-  blockchainId?: number;
+    @Expose()
+    @ApiPropertyOptional({
+        description: 'The blockchain record ID, if available',
+    })
+    blockchainId?: number;
 }
 
 @Exclude()
 export class UserConferenceResponseDTO {
-  @Expose()
-  @ApiProperty()
-  appId: string;
+    @Expose()
+    @ApiProperty()
+    appId: string;
 
-  @Expose()
-  @ApiProperty()
-  serverSecret: string;
+    @Expose()
+    @ApiProperty()
+    serverSecret: string;
 
-  @Expose()
-  @ApiProperty()
-  consultationId: string;
+    @Expose()
+    @ApiProperty()
+    consultationId: string;
 
-  @Expose()
-  @ApiProperty()
-  userId: number;
+    @Expose()
+    @ApiProperty()
+    userId: number;
 
-  @Expose()
-  @ApiProperty()
-  userName: string;
+    @Expose()
+    @ApiProperty()
+    userName: string;
 }
 
 export class UploadConsultationSpeechDTO {
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    type: 'string',
-    description: 'Doctor speech transcript from mobile client',
-    required: true,
-    example: 'i think you are facing heart problem',
-  })
-  doctorSpeech: string;
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        description: 'Doctor speech transcript from mobile client',
+        required: true,
+        example: 'i think you are facing heart problem',
+    })
+    doctorSpeech: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    type: 'string',
-    description: 'Patient speech transcript from mobile client',
-    required: true,
-    example: 'yes, i am dying right now',
-  })
-  patientSpeech: string;
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        description: 'Patient speech transcript from mobile client',
+        required: true,
+        example: 'yes, i am dying right now',
+    })
+    patientSpeech: string;
 }

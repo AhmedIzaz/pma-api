@@ -13,7 +13,10 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+<<<<<<< HEAD
   ParseIntPipe,
+=======
+>>>>>>> a661ec9e783fff2e95c5d4f6101689886c347519
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -28,7 +31,10 @@ import {
   PrescriptionResponseDTO,
   VerifyPrescriptionResponseDTO,
   UserConferenceResponseDTO,
+<<<<<<< HEAD
   UploadConsultationSpeechDTO,
+=======
+>>>>>>> a661ec9e783fff2e95c5d4f6101689886c347519
 } from './user.dto';
 import { UserService } from './user.service';
 import { DoctorService } from 'src/doctorModule/doctor.service';

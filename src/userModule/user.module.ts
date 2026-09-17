@@ -9,14 +9,13 @@ import { DoctorModule } from 'src/doctorModule/doctor.module';
 import { ConsultationRepository } from 'src/doctorModule/consultation.repository';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserEntity]),
-    ConfigModule,
-    forwardRef(() => DoctorModule),
-    
-  ],
-  controllers: [UserController],
-  providers: [UserService, UserRepository,],
-  exports: [TypeOrmModule, UserService, UserRepository],
+    imports: [
+        TypeOrmModule.forFeature([UserEntity]),
+        ConfigModule,
+        forwardRef(() => DoctorModule),
+    ],
+    controllers: [UserController],
+    providers: [UserService, UserRepository],
+    exports: [TypeOrmModule, UserService, UserRepository],
 })
-export class UserModule { }
+export class UserModule {}

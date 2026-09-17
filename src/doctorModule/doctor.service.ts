@@ -515,11 +515,8 @@ export class DoctorService {
                 );
             }
         });
-
-        
     }
 
-   
     async verifyPrescription(
         prescriptionId: number,
         file: Express.Multer.File,

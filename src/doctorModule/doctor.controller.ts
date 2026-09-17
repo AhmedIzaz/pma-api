@@ -36,7 +36,6 @@ import {
     UpdateDoctorServiceDTO,
     UpdateConsultationScheduleDTO,
     UpdateConsultationDurationDTO,
-    
 } from './doctor.dto';
 import { VerifyPrescriptionResponseDTO } from 'src/userModule/user.dto';
 
