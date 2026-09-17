@@ -1,0 +1,44 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# Version control
+.git
+.gitignore
+
+# Environment files (secrets should not be in image)
+.env
+.env.*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Tests
+test
+coverage
+.nyc_output
+
+# Misc
+.prettierrc
+eslint.config.mjs
+.github
+# scripts

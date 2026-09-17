@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consultations — PMA Doctor Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background-color: #0f172a; color: white; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .input-field { transition: all 0.3s; }
+    .input-field:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); border-color: #3b82f6; outline: none; }
+    .toast { transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .toast.show { transform: translateX(0); }
+    .btn-primary { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(135deg, #3b82f6, #7c3aed); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4); background: linear-gradient(135deg, #2563eb, #6d28d9); }
+    .btn-primary:active { transform: translateY(0); }
+    .spinner { border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="h-full flex overflow-hidden">
+  
+  <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+  <!-- Sidebar -->
+  <aside class="w-64 glass-card border-r border-white/10 h-full flex flex-col">
+    <div class="p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <i data-lucide="stethoscope" class="w-5 h-5 text-white"></i>
+          </div>
+          <span class="font-bold text-lg tracking-tight">Doctor Portal</span>
+        </div>
+
+       
+      </div>
+    </div>
+    
+    <div class="px-3 pb-6 flex-1 flex flex-col gap-1">
+      <a href="/doctor/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 font-medium transition-colors">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        Dashboard
+      </a>
+      <a href="/doctor/services" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 font-medium transition-colors">
+        <i data-lucide="briefcase-medical" class="w-5 h-5"></i>
+        Services
+      </a>
+      <a href="/doctor/consultations" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 text-white font-medium">
+        <i data-lucide="calendar-days" class="w-5 h-5"></i>
+        Consultations
+      </a>
+    </div>
+
+    <div class="p-4 border-t border-white/10">
+      <button onclick="logout()" class="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-slate-400 hover:text-red-400 font-medium transition-colors">
+        <i data-lucide="log-out" class="w-5 h-5"></i>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 h-full overflow-y-auto bg-[#0a0f1d] relative">
+    <div class="p-8 max-w-6xl mx-auto space-y-8">
+      
+      <!-- Header with profile button right-aligned -->
+      <header class="flex items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-white tracking-tight">Consultations</h1>
+          <p class="text-slate-400 text-sm mt-1">Manage and join your patient appointments.</p>
+        </div>
+
+        <!-- Profile button & dropdown -->
+        <div class="relative flex-shrink-0">
+          <button id="profile-btn" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img id="profile-avatar" src="https://ui-avatars.com/api/?name=Doctor&background=random" alt="Profile" class="w-9 h-9 rounded-full border-2 border-blue-400 object-cover" />
+          </button>
+
+          <!-- Profile Popup Dropdown -->
+          <div id="profile-popup" class="hidden absolute top-12 right-0 mt-1 w-64 glass-card rounded-xl shadow-2xl border border-white/10 overflow-hidden transform transition-all opacity-0 scale-95" style="z-index:100">
+            <div class="p-4 border-b border-white/10">
+              <p id="popup-name" class="font-bold text-white truncate">Doctor Name</p>
+              <p id="popup-email" class="text-sm text-gray-400 truncate">doctor@example.com</p>
+            </div>
+            <div class="p-2">
+              <button id="edit-profile-btn" class="w-full text-left px-4 py-2 hover:bg-white/10 rounded-lg flex items-center gap-2 transition-colors text-sm">
+                <i data-lucide="user-cog" class="w-4 h-4"></i> Edit Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div id="loading" class="text-center py-10 text-slate-500">Loading consultations...</div>
+      
+      <div id="noConsultations" class="hidden glass-card rounded-2xl p-10 text-center">
+        <div class="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="calendar-x" class="w-8 h-8 text-blue-400"></i>
+        </div>
+        <h3 class="text-lg font-medium text-white mb-2">No upcoming consultations</h3>
+        <p class="text-slate-400 text-sm mb-6">Patients have not booked any appointments yet.</p>
+      </div>
+
+      <!-- Consultations List -->
+      <div class="flex flex-col gap-4" id="consultationsContainer"></div>
+    </div>
+
+    <!-- Modal Background for Reschedule -->
+    <div id="scheduleModal" class="hidden absolute inset-0 bg-[#0a0f1d]/80 flex items-center justify-center p-4 backdrop-blur-sm z-40 transition-opacity">
+      <div class="glass-card w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-white">Update Schedule</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="scheduleForm" class="p-6 space-y-4">
+          <input type="hidden" id="consultationIdModal" />
+          
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-300">New Start Time</label>
+            <input type="datetime-local" id="startTimeInput" required
+              class="input-field w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500" />
+          </div>
+          
+          <div class="pt-4 flex gap-3">
+            <button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-sm transition">Cancel</button>
+            <button type="submit" id="saveBtn" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition">Save Schedule</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Background for Prescriptions -->
+    <div id="prescriptionModal" class="hidden absolute inset-0 bg-[#0a0f1d]/80 flex items-center justify-center p-4 backdrop-blur-sm z-40 transition-opacity">
+      <div class="glass-card w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-white">Prescriptions</h3>
+          <button onclick="closePrescriptionModal()" class="text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="p-6 flex-1 overflow-y-auto space-y-6">
+          
+          <!-- AI Generated Diagnosis Report -->
+          <div class="bg-white/5 rounded-xl p-4 border border-white/10" id="aiReportSection">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-medium text-slate-300">AI Generated Diagnosis Report</h4>
+              <button type="button" id="syncAiReportBtn" class="px-2 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium transition flex items-center gap-1" title="Sync AI Report">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Sync
+              </button>
+            </div>
+            <div id="aiReportContent" class="text-sm text-slate-400">
+              Loading...
+            </div>
+          </div>
+
+          <!-- Upload Form -->
+          <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+            <h4 class="text-sm font-medium text-slate-300 mb-3">Upload New Prescription</h4>
+            <form id="prescriptionForm" class="flex flex-col gap-3">
+              <input type="hidden" id="prescriptionConsultationId" />
+              <input type="file" id="prescriptionFile" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                class="block w-full text-sm text-slate-400
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-500/10 file:text-blue-400
+                hover:file:bg-blue-500/20" />
+              <button type="submit" id="uploadPrescriptionBtn" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition self-end flex items-center gap-2">
+                <i data-lucide="upload" class="w-4 h-4"></i> Upload (Max 5MB)
+              </button>
+            </form>
+          </div>
+
+          <!-- Existing Prescriptions -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-medium text-slate-300">Previously Uploaded (<span id="prescriptionCount">0</span>)</h4>
+            </div>
+            <div id="prescriptionList" class="space-y-3">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Background for Verification -->
+    <div id="verifyModal" class="hidden absolute inset-0 bg-[#0a0f1d]/80 flex items-center justify-center p-4 backdrop-blur-sm z-50 transition-opacity">
+      <div class="glass-card w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-white">Verify Prescription</h3>
+          <button onclick="closeVerifyModal()" class="text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <form id="verifyForm" class="p-6 space-y-4">
+          <input type="hidden" id="verifyPrescriptionId" />
+          
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-300">Upload file to verify</label>
+            <input type="file" id="verifyFile" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              class="block w-full text-sm text-slate-400
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-blue-500/10 file:text-blue-400
+              hover:file:bg-blue-500/20" />
+          </div>
+          
+          <div class="pt-4 flex gap-3">
+            <button type="button" onclick="closeVerifyModal()" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-sm transition">Cancel</button>
+            <button type="submit" id="verifyBtn" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition flex items-center justify-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4"></i> Verify
+            </button>
+          </div>
+        </form>
+        <div id="verifyResult" class="hidden px-6 pb-6 text-sm"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Edit Profile Modal -->
+  <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-md rounded-2xl p-6 relative">
+      <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <h2 class="text-2xl font-bold mb-6">Edit Profile</h2>
+      <form id="edit-profile-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+          <input type="text" id="edit-name" name="doctorName" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Specialization</label>
+          <input type="text" id="edit-specialization" name="specialization" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Qualifications</label>
+          <input type="text" id="edit-qualifications" name="qualifications" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Phone Number</label>
+          <input type="text" id="edit-phone" name="phoneNumber" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Bio</label>
+          <textarea id="edit-bio" name="bio" rows="2" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Profile Image</label>
+          <input type="file" id="edit-image" name="file" accept="image/jpeg, image/png" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30" />
+        </div>
+        <button type="submit" class="w-full btn-primary py-3 rounded-lg font-semibold flex items-center justify-center gap-2 mt-4 text-white">
+          Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // ── Profile Bar Logic ──────────────────────────────────────────────────
+    (function initProfileBar() {
+      const token = sessionStorage.getItem('doctor_token');
+      const profileBtn     = document.getElementById('profile-btn');
+      const profilePopup   = document.getElementById('profile-popup');
+      const editProfileBtn = document.getElementById('edit-profile-btn');
+      const editModal      = document.getElementById('edit-profile-modal');
+      const closeModalBtn  = document.getElementById('close-modal-btn');
+      const editForm       = document.getElementById('edit-profile-form');
+      const popupName      = document.getElementById('popup-name');
+      const popupEmail     = document.getElementById('popup-email');
+      const profileAvatar  = document.getElementById('profile-avatar');
+
+      /**
+       * Convert any Google Drive URL variant to a direct embeddable image URL.
+       * Handles both legacy viewer URLs (/file/d/ID/view) and already-converted uc URLs.
+       */
+     function toDriveDirectUrl(url) {
+  if (!url) return '';
+  
+  // Extract File ID from drive.google.com/uc?export=view&id=FILE_ID or drive.google.com/file/d/FILE_ID
+  const match = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    const fileId = match[1];
+    // Use Google's CDN endpoint which allows cross-origin img embedding
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+  
+  return url;
+}
+
+      /** Fetch and display the doctor's profile data */
+      function fetchProfile() {
+        fetch('/{{apiBase}}/doctors/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.statusCode) {
+            popupName.textContent  = data.doctorName  || 'Doctor';
+            popupEmail.textContent = data.doctorEmail || '';
+            const directImageUrl = toDriveDirectUrl(data.doctorImageUrl);
+            profileAvatar.src = directImageUrl
+              ? directImageUrl
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.doctorName || 'Doctor')}&background=random`;
+            document.getElementById('edit-name').value           = data.doctorName      || '';
+            document.getElementById('edit-specialization').value = data.specialization  || '';
+            document.getElementById('edit-qualifications').value = data.qualifications  || '';
+            document.getElementById('edit-phone').value          = data.phoneNumber     || '';
+            document.getElementById('edit-bio').value            = data.bio             || '';
+          }
+        })
+        .catch(err => console.error('Profile fetch error:', err));
+      }
+
+      if (token) fetchProfile();
+
+      /** Toggle profile popup visibility */
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profilePopup.classList.toggle('hidden');
+        setTimeout(() => {
+          profilePopup.classList.toggle('opacity-0');
+          profilePopup.classList.toggle('scale-95');
+        }, 10);
+      });
+
+      /** Close popup on outside click */
+      document.addEventListener('click', () => {
+        if (!profilePopup.classList.contains('hidden')) {
+          profilePopup.classList.add('opacity-0', 'scale-95');
+          setTimeout(() => profilePopup.classList.add('hidden'), 200);
+        }
+      });
+      profilePopup.addEventListener('click', (e) => e.stopPropagation());
+
+      /** Open edit modal from popup */
+      editProfileBtn.addEventListener('click', () => {
+        profilePopup.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => profilePopup.classList.add('hidden'), 200);
+        editModal.classList.remove('hidden');
+      });
+
+      /** Close edit modal */
+      closeModalBtn.addEventListener('click', () => editModal.classList.add('hidden'));
+
+      /** Submit edited profile */
+      editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner"></div> Saving...';
+        btn.disabled = true;
+
+        try {
+          const res = await fetch('/{{apiBase}}/doctors/profile', {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: new FormData(editForm)
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast('Profile updated successfully');
+            editModal.classList.add('hidden');
+            fetchProfile();
+          } else {
+            showToast(data.message || 'Failed to update profile', 'error');
+          }
+        } catch {
+          showToast('Network error', 'error');
+        } finally {
+          btn.innerHTML = original;
+          btn.disabled = false;
+        }
+      });
+    })();
+    // ─────────────────────────────────────────────────────────────────────
+    
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colorMap = { success: 'bg-emerald-500/90 border-emerald-400', error: 'bg-red-500/90 border-red-400', info: 'bg-blue-500/90 border-blue-400' };
+      const iconMap = { success: 'check-circle', error: 'x-circle', info: 'info' };
+      toast.className = `toast ${colorMap[type]} border backdrop-blur-sm text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]`;
+      toast.innerHTML = `<i data-lucide="${iconMap[type]}" class="w-5 h-5"></i><span class="text-sm font-medium">${message}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons({ nodes: [toast] });
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
+    }
+
+    function logout() {
+      sessionStorage.removeItem('doctor_token');
+      sessionStorage.removeItem('doctor_info');
+      window.location.href = '/doctor/login';
+    }
+
+    const token = sessionStorage.getItem('doctor_token');
+    if (!token) window.location.href = '/doctor/login';
+
+    const renderConsultations = (consultations) => {
+      const container = document.getElementById('consultationsContainer');
+      const noData = document.getElementById('noConsultations');
+      
+      if (consultations.length === 0) {
+        container.innerHTML = '';
+        noData.classList.remove('hidden');
+        return;
+      }
+      
+      noData.classList.add('hidden');
+      container.innerHTML = consultations.map(c => {
+        const time = new Date(c.startTime);
+        const formattedDate = time.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        const formattedTimeDetail = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const serviceName = c.service ? c.service.serviceName : 'Custom Consultation';
+        const userName = c.user ? c.user.userName : 'Unknown Patient';
+        const userEmail = c.user ? c.user.userEmail : 'N/A';
+        const dur = c.requestedDurationHours || 1;
+        
+        let statusBadge = '';
+        if (c.status === 'SCHEDULED') statusBadge = '<span class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs font-semibold">Scheduled</span>';
+        else if (c.status === 'COMPLETED') statusBadge = '<span class="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs font-semibold">Completed</span>';
+        else statusBadge = `<span class="bg-slate-500/20 text-slate-400 px-2 py-1 rounded text-xs font-semibold">${c.status}</span>`;
+
+        // Strip seconds for datetime-local input safely preserving locale
+        const timeForInput = new Date(time.getTime() - (time.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+
+        return `
+        <div class="glass-card rounded-2xl p-6 relative border border-white/5 hover:border-white/10 transition-colors flex flex-col md:flex-row gap-6 md:items-center justify-between">
+          <div class="flex-1 space-y-3">
+            <div class="flex items-center gap-3">
+              <h3 class="font-semibold text-lg text-white">${serviceName}</h3>
+              ${statusBadge}
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 text-sm text-slate-400">
+              <div class="flex items-center gap-2">
+                <i data-lucide="user" class="w-4 h-4 text-emerald-400"></i>
+                <span class="text-white">${userName}</span> <span class="text-xs opacity-60">(${userEmail})</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-purple-400"></i>
+                ${formattedDate} &bull; ${formattedTimeDetail} &bull; ${dur} hr${dur > 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3 self-end md:self-center">
+            <button onclick="openPrescriptionModal(${c.consultationId})" class="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-sm font-medium transition flex items-center gap-2">
+               <i data-lucide="file-text" class="w-4 h-4"></i> Prescriptions
+            </button>
+            ${c.status === 'SCHEDULED' ? `
+              <button onclick="openRescheduleModal(${c.consultationId}, '${timeForInput}')" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium transition flex items-center gap-2">
+                 <i data-lucide="calendar-clock" class="w-4 h-4"></i> Reschedule
+              </button>
+            ` : ''}
+            {{!-- TODO: By clicking Join, should redirect to conference join page /doctor/conference/:consultationId --}}
+            <button onclick="joinConference(${c.consultationId})" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2">
+               <i data-lucide="video" class="w-4 h-4"></i> Join
+            </button>
+          </div>
+        </div>
+      `;
+      }).join('');
+      
+      lucide.createIcons();
+    };
+
+    const fetchConsultations = async () => {
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('consultationsContainer').innerHTML = '';
+      document.getElementById('noConsultations').classList.add('hidden');
+      
+      try {
+        const res = await fetch('/{{apiBase}}/doctors/consultations', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401 || res.status === 403) return logout();
+        if (!res.ok) throw new Error('Failed to load consultations');
+        const data = await res.json();
+        
+        renderConsultations(data);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        document.getElementById('loading').classList.add('hidden');
+      }
+    };
+
+    // Modal behavior
+    const modal = document.getElementById('scheduleModal');
+    const prescriptionModal = document.getElementById('prescriptionModal');
+    
+    window.openRescheduleModal = (id, currentStartTimeInputStr) => {
+      document.getElementById('scheduleForm').reset();
+      document.getElementById('consultationIdModal').value = id;
+      document.getElementById('startTimeInput').value = currentStartTimeInputStr;
+      modal.classList.remove('hidden');
+    };
+    
+    window.closeModal = () => {
+      modal.classList.add('hidden');
+    };
+
+    const fetchConsultationDetails = async (id) => {
+      const btn = document.getElementById('syncAiReportBtn');
+      const icon = btn.querySelector('i');
+      if (icon) icon.classList.add('animate-spin');
+      
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultation/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch consultation details');
+        const data = await res.json();
+        
+        const contentDiv = document.getElementById('aiReportContent');
+        if (data.aiGeneratedDiagnosisReportSource) {
+          const match = data.aiGeneratedDiagnosisReportSource.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          const downloadUrl = match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : data.aiGeneratedDiagnosisReportSource;
+          
+          contentDiv.innerHTML = `
+            <div class="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-white">Diagnosis Report.pdf</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <a href="${data.aiGeneratedDiagnosisReportSource}" target="_blank" class="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium transition flex items-center gap-1" title="Preview Document">
+                  <i data-lucide="eye" class="w-4 h-4"></i> Preview
+                </a>
+                <a href="${downloadUrl}" target="_blank" download class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-medium transition flex items-center gap-1" title="Download Document">
+                  <i data-lucide="download" class="w-4 h-4"></i> Download
+                </a>
+              </div>
+            </div>
+          `;
+        } else {
+          contentDiv.innerHTML = '<div class="text-sm text-slate-500">AI Report is currently generating or not available yet.</div>';
+        }
+        lucide.createIcons();
+      } catch (err) {
+        document.getElementById('aiReportContent').innerHTML = `<div class="text-sm text-red-400">${err.message}</div>`;
+      } finally {
+        if (icon) icon.classList.remove('animate-spin');
+      }
+    };
+
+    document.getElementById('syncAiReportBtn').addEventListener('click', () => {
+      const id = document.getElementById('prescriptionConsultationId').value;
+      if (id) fetchConsultationDetails(id);
+    });
+
+    window.openPrescriptionModal = (id) => {
+      document.getElementById('prescriptionForm').reset();
+      document.getElementById('prescriptionConsultationId').value = id;
+      document.getElementById('prescriptionList').innerHTML = '<div class="text-sm text-slate-500 text-center py-4">Loading...</div>';
+      document.getElementById('prescriptionCount').innerText = '...';
+      document.getElementById('aiReportContent').innerHTML = 'Loading...';
+      prescriptionModal.classList.remove('hidden');
+      fetchPrescriptions(id);
+      fetchConsultationDetails(id);
+    };
+
+    window.closePrescriptionModal = () => {
+      prescriptionModal.classList.add('hidden');
+    };
+
+    window.joinConference = (id) => {
+      window.location.href = `/doctor/conference/${id}`;
+    };
+
+    document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('consultationIdModal').value;
+      const startTimeVal = document.getElementById('startTimeInput').value;
+      const startTimeIsoDate = new Date(startTimeVal).toISOString();
+
+      const payload = {
+        startTime: startTimeIsoDate
+      };
+      
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+      
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/${id}/schedule`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+           const msg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+           throw new Error(msg || 'Failed to update schedule');
+        }
+        
+        showToast(`Schedule updated successfully!`);
+        closeModal();
+        fetchConsultations();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Save Schedule';
+      }
+    });
+
+    const fetchPrescriptions = async (consultationId) => {
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/${consultationId}/prescriptions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch prescriptions');
+        const data = await res.json();
+        
+        document.getElementById('prescriptionCount').innerText = data.length;
+        
+        if (data.length === 0) {
+          document.getElementById('prescriptionList').innerHTML = '<div class="text-sm text-slate-500 text-center py-4 bg-white/5 rounded-xl border border-white/5">No prescriptions uploaded yet.</div>';
+          return;
+        }
+
+        document.getElementById('prescriptionList').innerHTML = data.map(p => `
+          <div class="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <i data-lucide="file" class="w-5 h-5 text-blue-400"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-white line-clamp-1">${p.fileName || 'Prescription Document'}</p>
+                <p class="text-xs text-slate-400">${new Date(p.dateInfo.createdAt).toLocaleString()}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openVerifyModal('${p.prescriptionId}')" class="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium transition flex items-center gap-1" title="Verify Document">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> <span class="hidden sm:inline">Verify</span>
+              </button>
+              <a href="${p.fileRef}" target="_blank" class="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition" title="View Document">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>
+            </div>
+          </div>
+        `).join('');
+        
+        lucide.createIcons();
+      } catch (err) {
+        document.getElementById('prescriptionList').innerHTML = `<div class="text-sm text-red-400 text-center py-4">${err.message}</div>`;
+      }
+    };
+
+    document.getElementById('prescriptionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('prescriptionConsultationId').value;
+      const fileInput = document.getElementById('prescriptionFile');
+      
+      if (!fileInput.files.length) return;
+      const file = fileInput.files[0];
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('File size must be 5MB or less.', 'error');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const btn = document.getElementById('uploadPrescriptionBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Uploading...';
+      lucide.createIcons();
+      
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/${id}/prescriptions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+           const msg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+           throw new Error(msg || 'Failed to upload prescription');
+        }
+        
+        showToast('Prescription uploaded successfully!');
+        fileInput.value = '';
+        fetchPrescriptions(id);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        lucide.createIcons();
+      }
+    });
+
+    const verifyModal = document.getElementById('verifyModal');
+
+    window.openVerifyModal = (id) => {
+      document.getElementById('verifyForm').reset();
+      document.getElementById('verifyPrescriptionId').value = id;
+      document.getElementById('verifyResult').classList.add('hidden');
+      verifyModal.classList.remove('hidden');
+    };
+
+    window.closeVerifyModal = () => {
+      verifyModal.classList.add('hidden');
+    };
+
+    document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('verifyPrescriptionId').value;
+      const fileInput = document.getElementById('verifyFile');
+      
+      if (!fileInput.files.length) return;
+      const file = fileInput.files[0];
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const btn = document.getElementById('verifyBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Verifying...';
+      lucide.createIcons();
+      
+      const resultContainer = document.getElementById('verifyResult');
+      resultContainer.classList.remove('hidden');
+      resultContainer.innerHTML = '<div class="text-slate-400">Verifying...</div>';
+
+      try {
+        const res = await fetch(`/{{apiBase}}/doctors/consultations/prescriptions/${id}/verify`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        const data = await res.json();
+
+        console.log({
+          data
+        })
+        
+        if (!res.ok) {
+           const msg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+           throw new Error(msg || 'Failed to verify prescription');
+        }
+        
+        if (data?.isBlockchainMatch && data?.isDbMatch) {
+          resultContainer.innerHTML = `
+            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+              <p class="font-semibold flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Verification Successful</p>
+              <p class="mt-1 opacity-80 text-xs">The file matches the database and blockchain records.</p>
+            </div>
+          `;
+        }
+      
+         else {
+          resultContainer.innerHTML = `
+            <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+              <p class="font-semibold flex items-center gap-2"><i data-lucide="x-circle" class="w-4 h-4"></i> Verification Failed</p>
+              <p class="mt-1 opacity-80 text-xs">The file does not match the original prescription.</p>
+            </div>
+          `;
+        }
+        lucide.createIcons();
+      } catch (err) {
+        showToast(err.message, 'error');
+        resultContainer.innerHTML = `<div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        lucide.createIcons();
+      }
+    });
+
+    // initial fetch
+    fetchConsultations();
+  </script>
+</body>
+</html>

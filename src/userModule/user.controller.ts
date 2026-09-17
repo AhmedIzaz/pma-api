@@ -1,0 +1,229 @@
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Post,
+  Req,
+  SerializeOptions,
+  UseGuards,
+  UseInterceptors,
+  Param,
+  UploadedFile,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+  ParseIntPipe,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  GoogleOAuthDTO,
+  UserLoginDTO,
+  UserLoginResponseDTO,
+  UserRegistrationDTO,
+  UserRegistrationResponseDTO,
+  BookAppointmentDTO,
+  UsersAppointmentListDTO,
+  PrescriptionResponseDTO,
+  VerifyPrescriptionResponseDTO,
+  UserConferenceResponseDTO,
+  UploadConsultationSpeechDTO,
+} from './user.dto';
+import { UserService } from './user.service';
+import { DoctorService } from 'src/doctorModule/doctor.service';
+import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { Roles, RolesGuard } from 'src/common/guards/roles.guard';
+import { TActorTypeEnum } from 'src/common/enums/database.enum';
+
+@ApiTags('Users')
+@Controller('users')
+export class UserController {
+  constructor(
+    private readonly userService: UserService,
+    private readonly doctorService: DoctorService,
+    private readonly configService: ConfigService,
+  ) { }
+
+  @Get('/hello')
+  async hello() {
+    return 'Hello from user controller';
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: UserRegistrationResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  @Post('/registration')
+  @ApiOperation({ summary: 'Register a new user with email and password' })
+  async registration(
+    @Body() body: UserRegistrationDTO,
+  ): Promise<UserRegistrationResponseDTO> {
+    const createdUser = await this.userService.userRegistration(body);
+    return createdUser;
+  }
+
+  @Throttle({ default: { limit: 2, ttl: 40 } })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: UserLoginResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  @Post('/login')
+  @ApiOperation({ summary: 'Login with email and password' })
+  async login(@Body() body: UserLoginDTO): Promise<UserLoginResponseDTO> {
+    const loginInformation = await this.userService.userLogin(body);
+    return loginInformation;
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60 } })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: UserLoginResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  @Post('/google-oauth')
+  @ApiOperation({
+    summary: 'Login or register via Google OAuth (mobile ID token)',
+    description:
+      'Accepts a Google ID token obtained from the mobile SDK, validates it, creates the user if they do not exist, and returns a JWT access token.',
+  })
+  async googleOAuth(@Body() body: GoogleOAuthDTO): Promise<UserLoginResponseDTO> {
+    return this.userService.googleOAuthLogin(body);
+  }
+
+  // ─── Doctor & Appointment Booking ────────────────────────
+  @Get('/doctors')
+  @ApiOperation({ summary: 'List all doctors and their services for patients' })
+
+  async getAllDoctors() {
+    return this.doctorService.getAllDoctorsWithServices();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Post('/appointments')
+  @ApiOperation({ summary: 'Book an appointment with a doctor' })
+
+  async bookAppointment(@Req() req, @Body() body: BookAppointmentDTO) {
+    return this.doctorService.createConsultation(body.doctorId, {
+      ...body,
+      userId: req.user.userId,
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Get('/appointments')
+  @ApiOperation({ summary: 'List all appointments taken by the logged-in user' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: UsersAppointmentListDTO,
+    excludeExtraneousValues: true,
+  })
+  async getUserAppointments(@Req() req) {
+    return this.doctorService.getUserConsultations(req.user.userId);
+  }
+
+  // implement api for getting prescriptions of per consultations route -> /consultations/:id/prescriptions including DTO and other common things
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Get('/consultations/:id/prescriptions')
+  @ApiOperation({ summary: 'Get prescriptions for a specific consultation' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: PrescriptionResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  async getConsultationPrescriptions(@Req() req, @Param('id') id: string) {
+    return this.doctorService.getConsultationPrescriptions(Number(id), req.user.userId);
+  }
+
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Post('/prescriptions/:id/verify')
+  @ApiOperation({ summary: 'Verify a prescription file against DB and Blockchain' })
+  @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('file'))
+  @SerializeOptions({
+    type: VerifyPrescriptionResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  async verifyPrescription(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required for verification');
+    }
+    return this.doctorService.verifyPrescription(Number(id), file);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Get('/consultations/:id/conference')
+  @ApiOperation({ summary: 'Get conference credentials for a specific consultation' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: UserConferenceResponseDTO,
+    excludeExtraneousValues: true,
+  })
+  async getConferenceCredentials(@Req() req, @Param('id') id: string) {
+    const consultation = await this.doctorService.getConsultationById(Number(id));
+    if (!consultation) {
+      throw new NotFoundException(`Consultation with ID ${id} not found`);
+    }
+
+    if (consultation.userId !== req.user.userId) {
+      throw new ForbiddenException('You do not have access to this consultation');
+    }
+
+    const base64AppId = this.configService.get<string>('ZIGO_APP_ID');
+    const base64ServerSecret = this.configService.get<string>('ZIGO_SERVER_SECRET');
+
+    if (!base64AppId || !base64ServerSecret) {
+      throw new Error('ZIGO_APP_ID or ZIGO_SERVER_SECRET not configured');
+    }
+
+    const appId = Buffer.from(base64AppId, 'base64').toString('utf-8');
+    const serverSecret = Buffer.from(base64ServerSecret, 'base64').toString('utf-8');
+
+    return {
+      appId,
+      serverSecret,
+      consultationId: id,
+      userId: req.user.userId,
+      userName: req.user.userName,
+    };
+  }
+
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles([TActorTypeEnum.USER])
+  @Post('/consultations/:id/upload-audio2')
+  @ApiOperation({
+      summary:
+          'Submit pre-transcribed doctor/patient speech for consultation report generation',
+  })
+  async uploadConsultationAudio2(
+      @Req() req,
+      @Param('id', ParseIntPipe) id: number,
+      @Body() body: UploadConsultationSpeechDTO,
+  ) {
+      return this.userService.uploadConsultationAudio2(
+          req.user.userId,
+          id,
+          body,
+      );
+  }
+
+}

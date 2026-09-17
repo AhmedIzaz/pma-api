@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}} — PMA Doctor Portal</title>
+  <meta name="description" content="{{description}}" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+            accent: { 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' },
+            surface: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 700: '#334155', 800: '#1e293b', 900: '#0f172a', 950: '#020617' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+
+    /* Animated gradient background */
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #1e3a8a 50%, #1e293b 75%, #0f172a 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Glass card */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Input focus animation */
+    .input-field {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .input-field:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      border-color: #3b82f6;
+    }
+
+    /* Button hover animation */
+    .btn-primary {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, #3b82f6, #7c3aed);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+      background: linear-gradient(135deg, #2563eb, #6d28d9);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* Floating particles */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.1;
+      animation: float linear infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.1; }
+      90% { opacity: 0.1; }
+      100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Toast notification */
+    .toast {
+      transform: translateX(120%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Pulse dot */
+    .pulse-dot {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+  </style>
+</head>
+<body class="h-full gradient-bg text-white antialiased overflow-hidden">
+
+  <!-- Floating particles -->
+  <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+  <!-- Top Bar -->
+  <header id="top-bar" class="hidden glass-card sticky top-0 z-40 px-6 py-4 flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-4">
+      <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+        Doctor Portal
+      </h1>
+    </div>
+    <div class="flex items-center gap-4 relative">
+      <button id="profile-btn" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <img id="profile-avatar" src="https://ui-avatars.com/api/?name=Doctor&background=random" alt="Profile" class="w-10 h-10 rounded-full border-2 border-blue-400 object-cover" />
+      </button>
+      
+      <!-- Profile Popup Dropdown -->
+      <div id="profile-popup" class="hidden absolute top-12 right-0 mt-2 w-64 glass-card rounded-xl shadow-2xl border border-white/10 overflow-hidden transform transition-all opacity-0 scale-95">
+        <div class="p-4 border-b border-white/10">
+          <p id="popup-name" class="font-bold text-white truncate">Doctor Name</p>
+          <p id="popup-email" class="text-sm text-gray-400 truncate">doctor@example.com</p>
+        </div>
+        <div class="p-2">
+          <button id="edit-profile-btn" class="w-full text-left px-4 py-2 hover:bg-white/10 rounded-lg flex items-center gap-2 transition-colors">
+            <i data-lucide="user-cog" class="w-4 h-4"></i> Edit Profile
+          </button>
+          <button id="logout-btn" class="w-full text-left px-4 py-2 hover:bg-white/10 rounded-lg flex items-center gap-2 text-red-400 transition-colors mt-1">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Edit Profile Modal -->
+  <div id="edit-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="glass-card w-full max-w-md rounded-2xl p-6 relative">
+      <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <h2 class="text-2xl font-bold mb-6">Edit Profile</h2>
+      <form id="edit-profile-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+          <input type="text" id="edit-name" name="doctorName" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Specialization</label>
+          <input type="text" id="edit-specialization" name="specialization" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Qualifications</label>
+          <input type="text" id="edit-qualifications" name="qualifications" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Phone Number</label>
+          <input type="text" id="edit-phone" name="phoneNumber" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Bio</label>
+          <textarea id="edit-bio" name="bio" rows="2" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white input-field focus:outline-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Profile Image</label>
+          <input type="file" id="edit-image" name="file" accept="image/jpeg, image/png" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30" />
+        </div>
+        <button type="submit" class="w-full btn-primary py-3 rounded-lg font-semibold flex items-center justify-center gap-2 mt-4">
+          Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  {{{body}}}
+
+  <script>
+    // Generate floating particles
+    (function() {
+      const container = document.getElementById('particles');
+      const colors = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981'];
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        const size = Math.random() * 6 + 2;
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.animationDuration = (Math.random() * 20 + 10) + 's';
+        particle.style.animationDelay = (Math.random() * 10) + 's';
+        container.appendChild(particle);
+      }
+    })();
+
+    // Toast notification system
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-500/90 border-emerald-400',
+        error: 'bg-red-500/90 border-red-400',
+        info: 'bg-blue-500/90 border-blue-400',
+      };
+      const icons = {
+        success: '<i data-lucide="check-circle" class="w-5 h-5"></i>',
+        error: '<i data-lucide="x-circle" class="w-5 h-5"></i>',
+        info: '<i data-lucide="info" class="w-5 h-5"></i>',
+      };
+      toast.className = `toast ${colors[type]} border backdrop-blur-sm text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]`;
+      toast.innerHTML = `${icons[type]}<span class="text-sm font-medium">${message}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons({ nodes: [toast] });
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+      }, 4000);
+    }
+
+    // Top Bar & Profile Logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('doctorToken');
+      const topBar = document.getElementById('top-bar');
+      const profileBtn = document.getElementById('profile-btn');
+      const profilePopup = document.getElementById('profile-popup');
+      const editProfileBtn = document.getElementById('edit-profile-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const editProfileModal = document.getElementById('edit-profile-modal');
+      const closeModalBtn = document.getElementById('close-modal-btn');
+      const editProfileForm = document.getElementById('edit-profile-form');
+      
+      const popupName = document.getElementById('popup-name');
+      const popupEmail = document.getElementById('popup-email');
+      const profileAvatar = document.getElementById('profile-avatar');
+
+      // Only show top bar if user is logged in and not on auth pages
+      if (token && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup')) {
+        topBar.classList.remove('hidden');
+        fetchProfile();
+      }
+
+      function fetchProfile() {
+        const apiBase = "{{apiBase}}";
+        fetch(`${apiBase}/doctors/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.statusCode) {
+            popupName.textContent = data.doctorName || 'Doctor';
+            popupEmail.textContent = data.doctorEmail || '';
+            if (data.doctorImageUrl) {
+              profileAvatar.src = data.doctorImageUrl;
+            } else {
+              profileAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.doctorName || 'Doctor')}&background=random`;
+            }
+            
+            // Fill form
+            document.getElementById('edit-name').value = data.doctorName || '';
+            document.getElementById('edit-specialization').value = data.specialization || '';
+            document.getElementById('edit-qualifications').value = data.qualifications || '';
+            document.getElementById('edit-phone').value = data.phoneNumber || '';
+            document.getElementById('edit-bio').value = data.bio || '';
+          }
+        })
+        .catch(err => console.error(err));
+      }
+
+      // Toggle Popup
+      if (profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          profilePopup.classList.toggle('hidden');
+          setTimeout(() => {
+            profilePopup.classList.toggle('opacity-0');
+            profilePopup.classList.toggle('scale-95');
+          }, 10);
+        });
+      }
+
+      // Close popup when clicking outside
+      document.addEventListener('click', () => {
+        if (!profilePopup.classList.contains('hidden')) {
+          profilePopup.classList.add('opacity-0', 'scale-95');
+          setTimeout(() => profilePopup.classList.add('hidden'), 200);
+        }
+      });
+
+      if (profilePopup) {
+        profilePopup.addEventListener('click', (e) => e.stopPropagation());
+      }
+
+      // Logout
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('doctorToken');
+          window.location.href = '/doctor/login';
+        });
+      }
+
+      // Edit Profile Modal
+      if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', () => {
+          profilePopup.classList.add('opacity-0', 'scale-95');
+          setTimeout(() => profilePopup.classList.add('hidden'), 200);
+          editProfileModal.classList.remove('hidden');
+        });
+      }
+
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+          editProfileModal.classList.add('hidden');
+        });
+      }
+
+      if (editProfileForm) {
+        editProfileForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const btn = e.target.querySelector('button[type="submit"]');
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<div class="spinner"></div> Saving...';
+          btn.disabled = true;
+
+          const formData = new FormData(editProfileForm);
+          const apiBase = "{{apiBase}}";
+          
+          try {
+            const res = await fetch(`${apiBase}/doctors/profile`, {
+              method: 'PATCH',
+              headers: { 'Authorization': `Bearer ${token}` },
+              body: formData
+            });
+            
+            const data = await res.json();
+            if (res.ok) {
+              showToast('Profile updated successfully');
+              editProfileModal.classList.add('hidden');
+              fetchProfile();
+            } else {
+              showToast(data.message || 'Failed to update profile', 'error');
+            }
+          } catch (err) {
+            showToast('Network error', 'error');
+          } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          }
+        });
+      }
+    });
+
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>
