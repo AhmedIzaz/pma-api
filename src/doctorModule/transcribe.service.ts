@@ -21,13 +21,13 @@ export class TranscriptionService {
         try {
             // Point to the pre-downloaded model cache baked into the Docker image.
             // Prevents any outbound network calls to HuggingFace CDN at runtime.
-            // env.cacheDir = '/app/.cache';
+            env.cacheDir = '/app/.cache';
 
             this.logger.log('Loading Whisper Speech Recognition model...');
-            // this.transcriber = await pipeline(
-            //     'automatic-speech-recognition',
-            //     'Xenova/whisper-tiny',
-            // );
+            this.transcriber = await pipeline(
+                'automatic-speech-recognition',
+                'Xenova/whisper-tiny',
+            );
 
             this.logger.log('Whisper model loaded successfully.');
         } catch (error) {
