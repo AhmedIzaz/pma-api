@@ -439,11 +439,7 @@ export class DoctorService {
         if (consultation.doctorId !== doctorId) {
             throw new ForbiddenException('You do not own this consultation');
         }
-        return {
-            statusCode: 200,
-            message:
-                'Audio uploaded successfully. Processing started asynchronously in the background.',
-        };
+        
 
         // Run audio processing in the background asynchronously
         setImmediate(async () => {
@@ -515,6 +511,12 @@ export class DoctorService {
                 );
             }
         });
+
+        return {
+            statusCode: 200,
+            message:
+                'Audio uploaded successfully. Processing started asynchronously in the background.',
+        };
     }
 
     async verifyPrescription(
