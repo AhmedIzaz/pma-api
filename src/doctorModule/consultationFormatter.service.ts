@@ -62,18 +62,22 @@ export class ConsultationFormatterService {
      * a structured consultation report. Skips server-side transcription.
      * Written: 2026-09-17
      */
+    // DOCTOR SPEECH:
+    // "${doctorSpeech}"
+
+    // PATIENT SPEECH:
+    // "${patientSpeech}"
     async formatSpeechToDraft(
         doctorSpeech: string,
         patientSpeech: string,
     ): Promise<StructuredConsultation> {
         const prompt = `
-    You are a medical assistant. Transform the following doctor and patient speech into a clean, structured consultation report.
+    You are a medical assistant. Transform the following doctor and patients combined speech into a clean, structured consultation report.
 
-    DOCTOR SPEECH:
-    "${doctorSpeech}"
+   
 
-    PATIENT SPEECH:
-    "${patientSpeech}"
+    TOTAL SPEECH (DOCTOR AND PATIENT):
+    "${doctorSpeech} ${patientSpeech}"
 
     Return ONLY the raw JSON object. Do NOT wrap the output in markdown code blocks like \`\`\`json or \`\`\`
     Return a raw JSON object with this EXACT structure:
