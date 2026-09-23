@@ -218,6 +218,10 @@ export class UserService {
 
         const { doctorSpeech, patientSpeech } = data;
 
+        console.log({
+            doctorSpeech, patientSpeech
+        })
+
         setImmediate(async () => {
             try {
                 console.log(

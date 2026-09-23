@@ -235,6 +235,7 @@ export class UserController {
         @Param('id', ParseIntPipe) id: number,
         @Body() body: UploadConsultationSpeechDTO,
     ) {
+        console.log("Audio uploaded from mobile patient")
         return this.userService.uploadConsultationAudio2(
             req.user.userId,
             id,
