@@ -334,7 +334,10 @@
           });
           
           mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) audioChunks.push(event.data);
+            if (event.data.size > 0) {
+              console.log("Audio chunk pushed")
+              audioChunks.push(event.data)
+            };
           };
 
           mediaRecorder.start();
