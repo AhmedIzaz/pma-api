@@ -321,6 +321,7 @@ export class DoctorController {
         )
         file: Express.Multer.File,
     ) {
+        console.log("Upload audio from doctor hit")
         return this.doctorService.uploadConsultationAudio(
             req.user.userId,
             id,

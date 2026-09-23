@@ -440,6 +440,7 @@ export class DoctorService {
             throw new ForbiddenException('You do not own this consultation');
         }
         
+        console.log("Going to generate prescription from web doctor")
 
         // Run audio processing in the background asynchronously
         setImmediate(async () => {
